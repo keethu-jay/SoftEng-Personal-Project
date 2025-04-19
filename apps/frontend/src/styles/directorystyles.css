@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+body {
+    margin: 0;
+    background-color: white;
+    font-family: "Inter", sans-serif;
+}
+
+/* Center the logo using flexbox */
+header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: #fff;
+}
+
+/* Adjust logo size */
+header img {
+    height: 50px;
+}
+
+/* A centered white “card” with shadow */
+main {
+    max-width: 600px;
+    margin: 60px auto;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    background-color: #fff;
+}
+
+/* Title in brand blue */
+h1 {
+    text-align: center;
+    color: #004c97;
+    margin-bottom: 30px;
+}
+
+/* Form labels */
+label {
+    display: block;
+    margin: 20px 0 8px;
+    font-weight: 600;
+}
+
+/* Dropdowns */
+select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+/* Blue button */
+button {
+    margin-top: 30px;
+    width: 100%;
+    padding: 14px;
+    background-color: #004c97;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #003970;
+}
+
+/* Additional directions section styling */
+.directions-info {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 2px solid #004c97;
+}
+
+.directions-info h2 {
+    color: #004c97;
+    margin-bottom: 10px;
+}
+
+.directions-info p {
+    margin: 10px 0;
+    line-height: 1.5;
+}

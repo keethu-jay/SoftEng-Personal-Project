@@ -1,0 +1,6 @@
+.LLMap {
+    font-family: sans-serif;
+    text-align: center;
+}
+
+#leafletmap { height: 180px; }

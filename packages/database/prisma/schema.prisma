@@ -1,0 +1,247 @@
+// This is your Prisma schema file, learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+  output     = "../.prisma/client"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model Employee {
+  employeeId              Int              @id @default(autoincrement())
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  email                   String           @unique
+  password                String
+  firstName               String
+  middleInitial           String?
+  lastName                String
+  occupation              String
+  serviceRequestsAssigned ServiceRequest[] @relation(name: "assignedTo")
+  serviceRequestsMade     ServiceRequest[] @relation(name: "requestedBy")
+}
+
+//**
+//* Each type of service request inherits from ServiceRequest
+//* Only translator requests for Iteration 1
+//*/
+model ServiceRequest {
+  requestId     Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  requestStatus String
+  priority      String
+  roomNum       String
+  comments      String?
+
+  // tables that inherit from ServiceRequest:
+  translatorRequest TranslatorRequest?
+  equipmentRequest  EquipmentRequest?
+  securityRequest   SecurityRequest?
+  sanitationRequest SanitationRequest?
+
+  // assigned relationship to Employee:
+  assignedEmployeeId    Int?
+  assignedEmployee      Employee?  @relation(name: "assignedTo", fields: [assignedEmployeeId], references: [employeeId])
+  // the employee who made the request
+  employeeRequestedById Int
+  employeeRequestedBy   Employee   @relation(name: "requestedBy", fields: [employeeRequestedById], references: [employeeId])
+  // which department it's made under
+  departmentUnderId     Int?
+  departmentUnder       Department? @relation(fields: [departmentUnderId], references: [departmentId], onDelete: SetNull)
+}
+
+model TranslatorRequest {
+  languageFrom     String
+  languageTo       String
+  startDateTime    DateTime
+  endDateTime      DateTime
+  // link to service request:
+  serviceRequestId Int            @unique
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [requestId])
+}
+
+model SecurityRequest {
+  numOfGuards      Int
+  securityType     String
+  // link to service request:
+  serviceRequestId Int            @unique
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [requestId])
+}
+
+model EquipmentRequest {
+  startDateTime    DateTime
+  endDateTime      DateTime
+  medicalDevice    String
+  signature        String //picture of signature
+  quantity         Int
+  // link to service request
+  serviceRequestId Int            @unique
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [requestId])
+}
+
+// --- The SanitationRequest model ---
+model SanitationRequest {
+  type   SanitationType
+  status RoomStatus
+
+  // link to service request:
+  serviceRequestId Int            @unique
+  ServiceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [requestId])
+}
+
+enum RequestType {
+  TranslatorRequest
+  EquipmentRequest
+  SecurityRequest
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum SanitationType {
+  GENERAL
+  DISINFECT
+  DEEP_CLEANING
+  WASTE_REMOVAL
+  PEST_CONTROL
+}
+
+enum RoomStatus {
+  VACANT
+  IN_USE
+}
+
+model Hospital {
+  hospitalId  Int    @id @default(autoincrement())
+  name        String @unique
+  address     String
+  placeId     String
+  defaultLat  Float
+  defaultLng  Float
+  defaultZoom Int
+
+  Departments Department[]
+}
+
+model Department {
+  departmentId Int    @id @default(autoincrement())
+  name         String
+  floorNum     Int
+  room         String
+  building     String
+
+  lat Float
+  lng Float
+
+  hospitalId Int
+  Hospital   Hospital @relation(fields: [hospitalId], references: [hospitalId])
+
+  graphId Int
+  Graph   Graph @relation(fields: [graphId], references: [graphId])
+
+  ServiceRequests ServiceRequest[]
+}
+
+model Graph {
+  graphId Int    @id @default(autoincrement())
+  name    String
+
+  imageURL String
+  north    Float
+  south    Float
+  east     Float
+  west     Float
+
+  Departments Department[]
+  Nodes       Node[]
+}
+
+model Node {
+  nodeId    Int    @id @default(autoincrement())
+  tags      String
+  lat       Float
+  lng       Float
+  edgeStart Edge[] @relation(name: "edgeS")
+  edgeEnd   Edge[] @relation(name: "edgeE")
+  graphId   Int
+  Graph     Graph  @relation(fields: [graphId], references: [graphId])
+}
+
+model Edge {
+  edgeId      Int  @id @default(autoincrement())
+  weight      Int
+  startNodeId Int
+  endNodeId   Int
+  startNode   Node @relation(name: "edgeS", fields: [startNodeId], references: [nodeId], onDelete: Cascade)
+  endNode     Node @relation(name: "edgeE", fields: [endNodeId], references: [nodeId], onDelete: Cascade)
+}
+
+// model Hospital {
+//   hospitalId  Int     @id @default(autoincrement())
+//   name        String  @unique
+//   placeId     String
+//   defaultZoom Int
+//   defaultLat  Float
+//   defaultLng  Float
+//   Floors      Floor[]
+// }
+//
+// model Floor {
+//   floorId     Int          @id @default(autoincrement())
+//   num         Int
+//   imageURL    String
+//   north       Float
+//   south       Float
+//   east        Float
+//   west        Float
+//   hospitalId  Int
+//   Hospital    Hospital     @relation(fields: [hospitalId], references: [hospitalId])
+//   Departments Department[]
+//   Graph       Graph?
+// }
+//
+// model Department {
+//   departmentId Int    @id @default(autoincrement())
+//   name         String
+//   suite        String
+//   floorId      Int
+//   Floor        Floor  @relation(fields: [floorId], references: [floorId])
+//   serviceRequests   ServiceRequest[]
+// }
+//
+// model Graph {
+//   graphId Int    @id @default(autoincrement())
+//   name    String
+//   Nodes   Node[]
+//   floorId Int    @unique
+//   Floor   Floor  @relation(fields: [floorId], references: [floorId])
+// }
+//
+// model Node {
+//   nodeId    Int    @id @default(autoincrement())
+//   name      String
+//   lat       Float
+//   lng       Float
+//   edgeStart Edge[] @relation(name: "edgeS")
+//   edgeEnd   Edge[] @relation(name: "edgeE")
+//   graphId   Int
+//   Graph     Graph  @relation(fields: [graphId], references: [graphId])
+// }
+//
+// model Edge {
+//   edgeId      Int  @id @default(autoincrement())
+//   weight      Int
+//   startNodeId Int  @unique
+//   endNodeId   Int  @unique
+//   startNode   Node @relation(name: "edgeS", fields: [startNodeId], references: [nodeId], onDelete: Cascade)
+//   endNode     Node @relation(name: "edgeE", fields: [endNodeId], references: [nodeId], onDelete: Cascade)
+// }
