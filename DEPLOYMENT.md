@@ -2,7 +2,7 @@
 
 This guide provides step-by-step instructions to deploy this application to Render (backend + database) and Vercel (frontend) for free.
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before deploying, ensure you have:
 - ✅ GitHub account with this repository
@@ -13,14 +13,14 @@ Before deploying, ensure you have:
 
 ---
 
-## 🗄️ Step 1: Deploy Database (Render PostgreSQL)
+## Step 1: Deploy Database (Render PostgreSQL)
 
 1. Go to [render.com](https://render.com) and sign in
 2. Click **"New +"** → **"PostgreSQL"**
 3. Configure:
    - **Name:** `hospital-nav-db` (or your preferred name)
-   - **Database:** `postgres` (default)
-   - **User:** `postgres` (default)
+   - **Database:** Leave blank (Render will auto-generate a name)
+   - **User:** Leave blank (Render will auto-generate a user)
    - **Region:** Choose closest to you
    - **PostgreSQL Version:** Latest (15+)
    - **Plan:** Free (if available) or Starter ($7/month)
@@ -29,10 +29,11 @@ Before deploying, ensure you have:
 6. **Copy the Internal Database URL** (you'll need this for the backend)
    - Format: `postgresql://user:password@internal-host:5432/database`
    - Find it in: Database dashboard → "Connections" tab → "Internal Database URL"
+   - This URL contains the auto-generated database name and user
 
 ---
 
-## 🔧 Step 2: Push Database Schema
+## Step 2: Push Database Schema
 
 Before deploying the backend, push your Prisma schema to the Render database:
 
@@ -52,7 +53,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 🖥️ Step 3: Deploy Backend (Render Web Service)
+## Step 3: Deploy Backend (Render Web Service)
 
 1. In Render dashboard, click **"New +"** → **"Web Service"**
 2. Connect your GitHub repository
@@ -64,13 +65,15 @@ Before deploying the backend, push your Prisma schema to the Render database:
    - **Root Directory:** Leave empty
    - **Build Command:**
      ```bash
-     corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install && yarn workspace database generate && yarn build
+     npm install -g yarn@4.7.0 && yarn install && yarn workspace database generate && yarn build
      ```
    - **Start Command:**
      ```bash
-     corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install --immutable && BACKEND_PORT=$PORT yarn workspace backend docker:run
+     npm install -g yarn@4.7.0 && yarn install --immutable && BACKEND_PORT=$PORT yarn workspace backend docker:run
      ```
    - **Plan:** Free (spins down after 15 min inactivity)
+   
+   **Note:** The `.nvmrc` file and `engines` field in `package.json` specify Node.js 20, which Render should automatically detect. If it still uses Node 22, the build command will install yarn via npm instead of using corepack.
 
 4. **Environment Variables** - Add these:
    ```
@@ -78,7 +81,9 @@ Before deploying the backend, push your Prisma schema to the Render database:
    POSTGRES_URL=<Internal Database URL from Step 1>
    BACKEND_SOURCE=production
    ```
-   **Important:** Use the **Internal Database URL** (not External) for `POSTGRES_URL`
+   **Important:** 
+   - Use the **Internal Database URL** (not External) for `POSTGRES_URL`
+   - **Note:** Google Maps API key is NOT needed here - it's only used in the frontend (Vercel)
 
 5. Click **"Create Web Service"**
 6. Wait ~5-10 minutes for first deployment
@@ -86,7 +91,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 🎨 Step 4: Deploy Frontend (Vercel)
+## Step 4: Deploy Frontend (Vercel)
 
 1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
 2. Click **"Add New..."** → **"Project"**
@@ -121,7 +126,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 🔐 Step 5: Configure Auth0 for Production
+## Step 5: Configure Auth0 for Production
 
 1. Go to [Auth0 Dashboard](https://manage.auth0.com/)
 2. Select your application
@@ -144,7 +149,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## ✅ Step 6: Verify Deployment
+## Step 6: Verify Deployment
 
 1. Visit your Vercel frontend URL
 2. Test key features:
@@ -158,7 +163,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 🔄 Updating Your Deployment
+## Updating Your Deployment
 
 ### Frontend Updates
 - Push changes to GitHub → Vercel auto-deploys
@@ -175,7 +180,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Backend Won't Start
 - **Check Render logs** for error messages
@@ -205,7 +210,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 💰 Cost Summary
+## Cost Summary
 
 | Service | Tier | Cost |
 |---------|------|------|
@@ -219,7 +224,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [Render Documentation](https://render.com/docs)
 - [Vercel Documentation](https://vercel.com/docs)
@@ -228,7 +233,7 @@ Before deploying the backend, push your Prisma schema to the Render database:
 
 ---
 
-## 🎯 Quick Reference
+## Quick Reference
 
 **Backend URL:** `https://your-backend-name.onrender.com`  
 **Frontend URL:** `https://your-project.vercel.app`  
