@@ -117,7 +117,7 @@ export default function Footer() {
                         &copy; 2025 Brigham and Women's Hospital. All rights reserved.
                     </p>
                     <p className="text-center text-gray-500 text-xs max-w-4xl mx-auto">
-                        <strong>Portfolio Project:</strong> This website is part of <strong>Keerthana Jayamoorthy's</strong> portfolio to demonstrate skills in the <strong>PERN stack</strong> (PostgreSQL, Express, React, Node.js). The original codebase was created by a team of nine developers over 7 weeks for the Software Engineering course at WPI, where I served as Lead Assistant Frontend Developer. I copied the codebase, made minor edits, and hosted it on Render for portfolio/job application purposes.
+                        <strong>Portfolio Project:</strong> This website is part of <strong>Keerthana Jayamoorthy's</strong> portfolio to demonstrate skills in the <strong>PERN stack</strong> (PostgreSQL, Express, React, Node.js). The original codebase was created by a team of nine developers over 7 weeks for the Software Engineering course at WPI, where I served as Lead Assistant Frontend Developer.
                     </p>
                 </div>
             </div>

@@ -44,10 +44,6 @@ export default function PortfolioDisclaimer() {
                         <p className="text-base sm:text-lg leading-relaxed">
                             The original codebase was created by a team of <strong>nine developers</strong> over <strong>7 weeks</strong> for the Software Engineering course at <strong>WPI</strong> (Worcester Polytechnic Institute). I served as the <strong>Lead Assistant Frontend Developer</strong> on this project.
                         </p>
-                        
-                        <p className="text-base sm:text-lg leading-relaxed">
-                            I copied the codebase and made minor edits, then hosted it on <strong>Render</strong> to showcase it as part of my portfolio for job applications and resumes.
-                        </p>
                     </div>
                     
                     <div className="mt-6 flex justify-end">
