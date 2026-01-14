@@ -2,7 +2,6 @@ import PostPreview from "@/components/Forum/PostPreview.tsx";
 import {
     Pagination,
     PaginationContent,
-    PaginationEllipsis,
     PaginationItem,
     PaginationLink,
     PaginationNext,
@@ -11,11 +10,13 @@ import {
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/axios";
 import { API_ROUTES } from "common/src/constants.ts";
-import {Button} from "@/components/ui/button.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import ForumPostPopup from "@/components/Forum/ForumPostPopup.tsx";
-import {Input} from "@/components/ui/input.tsx";
+import { Input } from "@/components/ui/input.tsx";
 
-
+/**
+ * Type definitions for forum post and reply data structures.
+ */
 export type PostPreviewProps = {
     postId: string;
     title: string;
@@ -33,6 +34,21 @@ type ReplyProps = {
     postId: number;
 };
 
+/**
+ * AllPost component - displays the forum with all posts.
+ * 
+ * This component:
+ * - Fetches all forum posts from the backend (ordered by newest first)
+ * - Implements pagination to display posts in batches
+ * - Provides search functionality to filter posts
+ * - Allows users to create new posts via popup
+ * 
+ * Features:
+ * - Batch pagination (3 posts per page)
+ * - Search by title or content
+ * - Create new post functionality
+ * - Loading and error states
+ */
 export default function AllPost() {
     const [allPosts, setAllPosts] = useState<PostPreviewProps[]>([]);
     const [currentPost, setCurrentPosts] = useState<PostPreviewProps[]>([]);
@@ -41,6 +57,10 @@ export default function AllPost() {
     const [loading, setLoading] = useState(true);
     const postPerBatch = 3;
 
+    /**
+     * Handles search functionality.
+     * Filters posts by title or content matching the search query.
+     */
     const handleSearch = () => {
         const filtered = allPosts.filter(
             (post) =>
@@ -50,42 +70,68 @@ export default function AllPost() {
         setCurrentPosts(filtered.slice(0, postPerBatch));
         setBatchNumber(0);
     };
-    const [showPopup, setShowPopup] = useState(false);
 
+    /**
+     * Resets the search query and displays the first batch of all posts.
+     */
     const resetSearch = () => {
         setSearchQuery("");
-        setCurrentPosts(allPosts.slice(0, postPerBatch));
-        setBatchNumber(0);
+        if (allPosts.length > 0) {
+            setCurrentPosts(allPosts.slice(0, postPerBatch));
+            setBatchNumber(0);
+        }
     };
 
+    /**
+     * Resets to first batch when search query is cleared.
+     */
     useEffect(() => {
-        if (searchQuery.trim() === "") {
-            resetSearch();
+        if (searchQuery.trim() === "" && allPosts.length > 0) {
+            setCurrentPosts(allPosts.slice(0, postPerBatch));
+            setBatchNumber(0);
         }
-    }, [searchQuery]);
+    }, [searchQuery, allPosts, postPerBatch]);
 
+    /**
+     * Navigates to the previous batch of posts.
+     */
     const toPreviousBatch = () => {
         if (batchNumber > 0) {
             setBatchNumber(batchNumber - 1);
         }
     };
 
+    /**
+     * Navigates to the next batch of posts.
+     */
     const toNextBatch = () => {
         if ((batchNumber + 1) * postPerBatch < allPosts.length) {
             setBatchNumber(batchNumber + 1);
         }
     };
 
+    /**
+     * Navigates to a specific batch number.
+     * 
+     * @param {number} number - The batch number to navigate to
+     */
     const toThisBatch = (number: number) => {
         setBatchNumber(number);
     };
 
+    /**
+     * Updates the current posts displayed based on the current batch number.
+     */
     useEffect(() => {
         const start = batchNumber * postPerBatch;
         const end = start + postPerBatch;
         setCurrentPosts(allPosts.slice(start, end));
     }, [batchNumber, allPosts]);
 
+    /**
+     * Fetches all forum posts from the backend API.
+     * Maps the backend response to the frontend PostPreviewProps format.
+     */
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -117,7 +163,6 @@ export default function AllPost() {
                 }))
             }));
 
-            console.log(`Loaded ${mappedPosts.length} forum posts`);
             setAllPosts(mappedPosts);
             setCurrentPosts(mappedPosts.slice(0, postPerBatch));
             setBatchNumber(0);
@@ -130,6 +175,9 @@ export default function AllPost() {
         }
     };
 
+    /**
+     * Fetches posts when component mounts.
+     */
     useEffect(() => {
         fetchData();
     }, []);
@@ -137,8 +185,8 @@ export default function AllPost() {
     return (
         <div className="min-h-screen p-4 sm:p-6 lg:p-8 bg-white">
             <div className="max-w-5xl mx-auto">
+                {/* Header section */}
                 <div className="border-2 border-[#0077b6] rounded-2xl shadow-lg p-6 sm:p-8 bg-white mb-8">
-                    {/* Header Section */}
                     <div className="mb-6">
                         <h1 className="text-3xl sm:text-4xl font-bold text-[#03045e] mb-2">
                             Help Forum
@@ -148,7 +196,7 @@ export default function AllPost() {
                         </p>
                     </div>
 
-                    {/* Search and Actions */}
+                    {/* Search and actions */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                         <div className="flex-1">
                             <Input
@@ -189,7 +237,7 @@ export default function AllPost() {
                     </div>
                 </div>
 
-                {/* Posts List */}
+                {/* Posts list */}
                 <div className="space-y-4 mb-8">
                     {loading ? (
                         <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">

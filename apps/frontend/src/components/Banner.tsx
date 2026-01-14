@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, Link } from "react-router-dom";
 import {
     NavigationMenu,
@@ -17,8 +17,6 @@ import {faCircleUser, faUserShield} from "@fortawesome/free-solid-svg-icons";
 import hospitalLogo from "@/public/hospital2.png";
 
 import { useAuth0 } from "@auth0/auth0-react";
-import SearchBar from "@/components/SearchStuff/SearchBar.tsx";
-import AccessDropMenu from "@/components/Accessibility.tsx";
 import DemoModeDropdown from "@/components/DemoModeDropdown.tsx";
 import { useDemoMode } from "@/hooks/useDemoMode";
 
@@ -27,6 +25,7 @@ export default function Banner({isLoggedIn}: {isLoggedIn: boolean})  {
     const { user, isAuthenticated, isLoading } = useAuth0();
     const { loginWithRedirect } = useAuth0();
     const { isDemoMode, demoMode } = useDemoMode();
+    const [showDisclaimer, setShowDisclaimer] = useState(true);
     
     // Debug: log when demoMode changes
     useEffect(() => {
@@ -77,18 +76,6 @@ export default function Banner({isLoggedIn}: {isLoggedIn: boolean})  {
                             <NavigationMenuItem>
                             </NavigationMenuItem>
 
-                            <SearchBar />
-                            {isLoggedIn && (
-                                <NavigationMenuItem>
-                                    <Link to="/profile" className="inline-block">
-                                        <img
-                                            src={user?.picture}
-                                            alt={user?.name}
-                                            className="w-10 h-10 rounded-full border-2 border-[#0077b6] hover:opacity-80 transition duration-200 shadow-md"
-                                        />
-                                    </Link>
-                                </NavigationMenuItem>)}
-
                             {/* Show demo mode button when not authenticated (whether in demo mode or not) */}
                             {!isAuthenticated && (
                                 <NavigationMenuItem className="list-none">
@@ -116,6 +103,23 @@ export default function Banner({isLoggedIn}: {isLoggedIn: boolean})  {
                     </NavigationMenu>
                 </div>
             </div>
+            {showDisclaimer && (
+                <div className="w-full flex justify-center mt-1 mb-1">
+                    <div className="inline-flex items-center gap-1.5 bg-red-600 text-white text-[0.7rem] sm:text-xs font-semibold py-0.5 px-3 rounded-full shadow-sm">
+                        <span>
+                            This site is a demo and is not officially affiliated with Brigham and Women&apos;s Hospital.
+                        </span>
+                        <button
+                            type="button"
+                            className="ml-1 text-white/80 hover:text-white text-xs font-bold focus:outline-none"
+                            aria-label="Dismiss disclaimer"
+                            onClick={() => setShowDisclaimer(false)}
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

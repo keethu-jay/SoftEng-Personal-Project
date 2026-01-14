@@ -516,6 +516,7 @@ const MapEditor: React.FC = () => {
                     graph={graph}
                     mode={mode}
                     zoomFlag={zoomFlag}
+                    editableNodes={currentGraphNodes}
                 />
             </div>
         </div>

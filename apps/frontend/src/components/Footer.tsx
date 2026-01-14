@@ -17,9 +17,6 @@ export default function Footer() {
                                 alt="Brigham and Women's Hospital Logo"
                             />
                         </a>
-                        <p className="mt-6 text-gray-300">
-                            CS 3733 - Team D
-                        </p>
                     </div>
                     {/*Company*/}
                     <div className="lg:col-span-2 md:col-span-4 col-span-12">
@@ -116,8 +113,11 @@ export default function Footer() {
             </div>
             <div className="border-t border-slate-700">
                 <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    <p className="text-center text-gray-400 text-sm">
+                    <p className="text-center text-gray-400 text-sm mb-2">
                         &copy; 2025 Brigham and Women's Hospital. All rights reserved.
+                    </p>
+                    <p className="text-center text-gray-500 text-xs max-w-4xl mx-auto">
+                        <strong>Portfolio Project:</strong> This website is part of <strong>Keerthana Jayamoorthy's</strong> portfolio to demonstrate skills in the <strong>PERN stack</strong> (PostgreSQL, Express, React, Node.js). The original codebase was created by a team of nine developers over 7 weeks for the Software Engineering course at WPI, where I served as Lead Assistant Frontend Developer. I copied the codebase, made minor edits, and hosted it on Render for portfolio/job application purposes.
                     </p>
                 </div>
             </div>

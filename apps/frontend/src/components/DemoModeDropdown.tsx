@@ -17,10 +17,10 @@ interface DemoModeDropdownProps {
 }
 
 const DemoModeDropdown = ({ children }: DemoModeDropdownProps) => {
-    const { demoMode, setDemoMode, isDemoMode } = useDemoMode();
+    const { demoMode, setDemoMode } = useDemoMode();
     const [open, setOpen] = useState(false);
 
-    const handleModeChange = useCallback((mode: "patient" | "admin" | null) => {
+    const handleModeChange = useCallback((mode: "patient" | "admin") => {
         try {
             console.log("Changing demo mode to:", mode);
             // Close dropdown immediately
@@ -119,27 +119,6 @@ const DemoModeDropdown = ({ children }: DemoModeDropdownProps) => {
                         </div>
                     </DropdownMenuItem>
                 </div>
-                {isDemoMode && (
-                    <>
-                        <DropdownMenuSeparator className="my-2 border-black" />
-                        <DropdownMenuItem
-                            onSelect={(e) => {
-                                e.preventDefault();
-                                console.log("Exit demo mode selected");
-                                handleModeChange(null);
-                            }}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                console.log("Exit demo mode clicked");
-                                handleModeChange(null);
-                            }}
-                            className="px-4 py-2.5 rounded-lg text-sm font-medium text-black border-2 border-black bg-white hover:bg-gray-100 transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer focus:outline-none"
-                        >
-                            Exit Demo Mode
-                        </DropdownMenuItem>
-                    </>
-                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

@@ -75,12 +75,12 @@ export default function TranslatorServiceRequest() {
     return (
         <>
             {!submitted ?
-                <ScrollArea className="max-h-[95vh] overflow-y-auto pr-4 w-full max-w-screen-lg mx-auto bg-white">
-                <div className="flex flex-col gap-4 py-6">
-                    <div className="bg-[#0077b6]/90 text-white rounded-3xl px-6 py-4 max-w-5xl w-full mx-auto shadow-lg border-2 border-black mb-4">
-                        <h2 className="text-4xl font-bold text-left">Request a Translator</h2>
+                <ScrollArea className="max-h-[75vh] overflow-y-auto pr-3 w-full max-w-screen-md mx-auto bg-white rounded-3xl">
+                <div className="flex flex-col gap-4 py-6 px-4">
+                    <div className="bg-[#0077b6]/90 text-white rounded-3xl px-5 py-3 w-full shadow-lg border border-[#03045e]/60">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-left">Request a Translator</h2>
                     </div>
-                        <form onSubmit={onSubmit}>
+                        <form onSubmit={onSubmit} className="w-full space-y-3">
                             <div>
                                 <Label className="pt-4 pb-2" htmlFor="employeeId">Employee ID (optional)</Label>
                                 <Input

@@ -1,116 +1,107 @@
-# Free Deployment Guide
+# Deployment Guide - Render & Vercel
 
-This guide will help you deploy your project for free (or very low cost) so you can share it on your resume.
+This guide provides step-by-step instructions to deploy this application to Render (backend + database) and Vercel (frontend) for free.
 
-**Before deploying, make sure you've set up:**
-- Auth0 account and application (see `SETUP_GUIDE.md`)
-- Google Maps API key (see `SETUP_GUIDE.md`)
-- Tested everything locally (see `SETUP_GUIDE.md`) 
+## 📋 Prerequisites
 
-## Recommended Setup (100% Free)
-
-**Frontend:** Vercel (Free, fast, never sleeps)  
-**Backend:** Render (Free tier, sleeps after 15 min inactivity but wakes up automatically)  
-**Database:** Render PostgreSQL (Free tier, 90 days retention)
+Before deploying, ensure you have:
+- ✅ GitHub account with this repository
+- ✅ Render account (sign up at [render.com](https://render.com))
+- ✅ Vercel account (sign up at [vercel.com](https://vercel.com))
+- ✅ Google Maps API key ([Get one here](https://console.cloud.google.com/))
+- ✅ Auth0 account ([Sign up here](https://auth0.com))
 
 ---
 
-## Option 1: Render + Vercel (Recommended - Free)
+## 🗄️ Step 1: Deploy Database (Render PostgreSQL)
 
-### Step 1: Set Up Database (Render PostgreSQL)
-
-1. Go to [render.com](https://render.com) and sign up with GitHub
+1. Go to [render.com](https://render.com) and sign in
 2. Click **"New +"** → **"PostgreSQL"**
 3. Configure:
-   - **Name:** `your-project-name-db`
+   - **Name:** `hospital-nav-db` (or your preferred name)
    - **Database:** `postgres` (default)
    - **User:** `postgres` (default)
    - **Region:** Choose closest to you
-   - **PostgreSQL Version:** Latest
+   - **PostgreSQL Version:** Latest (15+)
    - **Plan:** Free (if available) or Starter ($7/month)
 4. Click **"Create Database"**
-5. Wait for database to be created (~2 minutes)
-6. Copy the **Internal Database URL** (you'll need this later)
-   - This URL contains all connection info: `postgresql://user:password@host:port/database`
-   - **To find individual values** (if needed): Click on your database in Render dashboard → Go to "Connections" tab → You'll see:
-     - **Host:** Under "Internal Database Host" (e.g., `dpg-xxxxx-a.oregon-postgres.render.com`)
-     - **Port:** Usually `5432`
-     - **User:** Usually `postgres` (shown in credentials)
-     - **Password:** Click "Show" to reveal
-     - **Database:** Usually `postgres`
+5. Wait ~2 minutes for database creation
+6. **Copy the Internal Database URL** (you'll need this for the backend)
+   - Format: `postgresql://user:password@internal-host:5432/database`
+   - Find it in: Database dashboard → "Connections" tab → "Internal Database URL"
 
-### Step 2: Push Database Schema (Recommended Before Backend Deployment)
+---
 
-**Do this step before deploying the backend** (or right after Step 1):
+## 🔧 Step 2: Push Database Schema
+
+Before deploying the backend, push your Prisma schema to the Render database:
 
 1. In Render, go to your PostgreSQL database dashboard
-2. Scroll down to find the **"External Database URL"** 
-   - This is different from the Internal Database URL
-   - It's under "Connections" or "External Database URL" section
-   - Format: `postgresql://user:password@external-host:port/database`
-3. In your local project, create/update `.env.prod` file in the root directory:
-   ```
+2. Find the **"External Database URL"** (different from Internal URL)
+   - Located in "Connections" tab
+   - Format: `postgresql://user:password@external-host:5432/database`
+3. In your local project root, create/update `.env.prod`:
+   ```env
    POSTGRES_URL=<External Database URL from Render>
    ```
-4. Open your terminal and run:
+4. Run locally:
    ```bash
    yarn workspace database push:prod
    ```
-   This will push your Prisma schema to the Render database.
+   This will create all tables in your Render database.
 
-**Note:** The External Database URL allows connections from outside Render. The Internal Database URL is only for connections between Render services.
+---
 
-### Step 3: Deploy Backend (Render Web Service)
+## 🖥️ Step 3: Deploy Backend (Render Web Service)
 
 1. In Render dashboard, click **"New +"** → **"Web Service"**
 2. Connect your GitHub repository
-3. Configure:
-   - **Name:** `your-project-backend`
-   - **Environment:** Node
-   - **Build Command:** `corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install && yarn workspace database generate && yarn build`
-   - **Start Command:** `corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install --immutable && BACKEND_PORT=$PORT yarn workspace backend docker:run`
-   - **Plan:** Free (spins down after 15 min of inactivity)
+3. Configure the service:
+   - **Name:** `hospital-nav-backend`
+   - **Environment:** `Node`
+   - **Region:** Same as database
+   - **Branch:** `main` (or your default branch)
+   - **Root Directory:** Leave empty
+   - **Build Command:**
+     ```bash
+     corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install && yarn workspace database generate && yarn build
+     ```
+   - **Start Command:**
+     ```bash
+     corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install --immutable && BACKEND_PORT=$PORT yarn workspace backend docker:run
+     ```
+   - **Plan:** Free (spins down after 15 min inactivity)
 
-4. **Environment Variables:** Add these:
+4. **Environment Variables** - Add these:
    ```
    NODE_ENV=production
-   POSTGRES_URL=<paste the Internal Database URL from Step 1>
+   POSTGRES_URL=<Internal Database URL from Step 1>
    BACKEND_SOURCE=production
-   BACKEND_URL=https://your-backend-name.onrender.com
    ```
-   **Note:** We don't set `BACKEND_PORT` here - it will be set in the Start Command from Render's `$PORT` variable.
-   **Important Notes:**
-   - `BACKEND_PORT` is set in the Start Command (from Render's `$PORT`) - don't set it in environment variables
-   - Use the **Internal Database URL** (not External) - it's in the format `postgresql://user:password@internal-host:port/database`
-   - Replace `your-backend-name` with your actual Render service name
-   - Since Prisma uses `POSTGRES_URL`, you only need that one database variable
+   **Important:** Use the **Internal Database URL** (not External) for `POSTGRES_URL`
 
 5. Click **"Create Web Service"**
-6. Wait for deployment (~5-10 minutes)
+6. Wait ~5-10 minutes for first deployment
+7. **Copy your backend URL** (e.g., `https://hospital-nav-backend.onrender.com`)
 
-**After creating the service, update the Start Command:**
-- If the deployment fails, or to update it later:
-  1. Go to your service dashboard (not the Environment tab)
-  2. Click **"Settings"** in the left sidebar (or scroll down on the main page)
-  3. Find the **"Start Command"** field
-  4. Change it to: `corepack enable && yarn workspace backend docker:run`
-  5. Click **"Save Changes"**
+---
 
-7. Copy your backend URL (e.g., `https://your-backend-name.onrender.com`)
+## 🎨 Step 4: Deploy Frontend (Vercel)
 
-### Step 4: Deploy Frontend (Vercel)
-
-1. Go to [vercel.com](https://vercel.com) and sign up with GitHub
+1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
 2. Click **"Add New..."** → **"Project"**
 3. Import your GitHub repository
-4. Configure:
+4. Configure project:
    - **Framework Preset:** Other (or leave blank)
-   - **Root Directory:** Leave empty (use root of repo)
+   - **Root Directory:** Leave empty
    - **Install Command:** Leave empty
-   - **Build Command:** `corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install && cd apps/frontend && yarn build`
+   - **Build Command:**
+     ```bash
+     corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install && cd apps/frontend && yarn build
+     ```
    - **Output Directory:** `apps/frontend/build`
 
-5. **Environment Variables:** Add:
+5. **Environment Variables** - Add these:
    ```
    ENABLE_EXPERIMENTAL_COREPACK=1
    VITE_API_URL=https://your-backend-name.onrender.com
@@ -118,233 +109,138 @@ This guide will help you deploy your project for free (or very low cost) so you 
    VITE_AUTH0_CLIENT_ID=your-auth0-client-id
    VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
    ```
-   - `ENABLE_EXPERIMENTAL_COREPACK=1` tells Vercel to enable Corepack support
-   - `VITE_API_URL` is your backend URL (we'll configure axios to use this)
-   - `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` are for Auth0 authentication (see Step 5)
-   - `VITE_GOOGLE_MAPS_API_KEY` is for Google Maps (see SETUP_GUIDE.md for setup instructions)
+   **Replace:**
+   - `your-backend-name.onrender.com` with your actual Render backend URL
+   - `your-auth0-domain` with your Auth0 domain
+   - `your-auth0-client-id` with your Auth0 client ID
+   - `your-google-maps-api-key` with your Google Maps API key
 
 6. Click **"Deploy"**
-7. Wait for deployment (~2-3 minutes)
+7. Wait ~2-3 minutes for deployment
 8. Your site will be live at `https://your-project.vercel.app`
 
-### Step 5: Configure Auth0 for Production
+---
 
-To enable login functionality on your deployed site, you need to configure Auth0:
+## 🔐 Step 5: Configure Auth0 for Production
 
-1. Go to [Auth0 Dashboard](https://manage.auth0.com/) and sign in
-2. Select your application (or create a new one if needed)
+1. Go to [Auth0 Dashboard](https://manage.auth0.com/)
+2. Select your application
 3. Go to **Settings** tab
-4. Scroll down to **Application URIs** section
+4. Scroll to **Application URIs** section
 5. Add your production URLs:
-   - **Allowed Callback URLs:** `https://your-project.vercel.app/directory, https://your-project.vercel.app`
-   - **Allowed Logout URLs:** `https://your-project.vercel.app`
-   - **Allowed Web Origins:** `https://your-project.vercel.app`
-6. If you also want local development to work, add:
-   - **Allowed Callback URLs:** `https://your-project.vercel.app/directory, https://your-project.vercel.app, http://localhost:3000/directory`
-   - **Allowed Logout URLs:** `https://your-project.vercel.app, http://localhost:3000`
-   - **Allowed Web Origins:** `https://your-project.vercel.app, http://localhost:3000`
-7. Scroll up and copy:
-   - **Domain** (e.g., `dev-b5d68fi8od5s513y.us.auth0.com`)
-   - **Client ID** (e.g., `jepCXrJUcBq34pKdSGGzd2sidUxVpnsL`)
-8. Update Vercel environment variables with these values (if different from defaults)
-9. Click **Save Changes** in Auth0
-10. Redeploy your Vercel app (or it will auto-deploy on next commit)
-
-**Note:** The code has been updated to use environment variables for Auth0 config. The default values are already set, but you can override them via Vercel environment variables if needed.
-
-### Step 6: Frontend API Configuration (Already Done!)
-
-The code has been updated to support production deployment. Here's what was changed:
-
-1. **Axios Configuration**: Created `apps/frontend/src/lib/axios.ts` that uses `VITE_API_URL` environment variable
-2. **Updated Services**: Updated service files to use the new axios instance
-3. **CORS Enabled**: Added CORS support to the backend
-
-**Important**: When deploying to Vercel, set the environment variable:
-- `VITE_API_URL=https://your-backend-name.onrender.com`
-
-**Note**: Some files may still use `axios` directly. If you encounter issues, update them to use `apiClient` from `src/lib/axios.ts`.
+   - **Allowed Callback URLs:**
+     ```
+     https://your-project.vercel.app/directory, https://your-project.vercel.app
+     ```
+   - **Allowed Logout URLs:**
+     ```
+     https://your-project.vercel.app
+     ```
+   - **Allowed Web Origins:**
+     ```
+     https://your-project.vercel.app
+     ```
+6. Click **"Save Changes"**
 
 ---
 
-## Option 2: All-in-One Render (Simpler but Backend Sleeps)
+## ✅ Step 6: Verify Deployment
 
-Deploy everything on Render:
-
-1. **Database:** Follow Step 1 from Option 1
-2. **Push Schema:** Follow Step 2 from Option 1 (push schema locally)
-3. **Backend:** Follow Step 3 from Option 1
-4. **Frontend:** 
-   - In Render, create a new **Static Site**
-   - Connect GitHub repo
-   - Build Command: `corepack enable && corepack prepare yarn@4.7.0 --activate && cd apps/frontend && yarn build`
-   - Publish Directory: `apps/frontend/build`
-   - Add environment variable: `VITE_API_URL=https://your-backend-name.onrender.com`
-
-**Note:** Backend will sleep after 15 min, first request will take ~30 seconds to wake up.
+1. Visit your Vercel frontend URL
+2. Test key features:
+   - ✅ Home page loads
+   - ✅ Directory page shows departments
+   - ✅ Directions page works
+   - ✅ Service request forms work
+   - ✅ Forum loads posts
+3. Check browser console for any errors
+4. Check Render logs if backend seems slow
 
 ---
 
-## Option 3: Railway (Easier Setup, $5/month after free trial)
+## 🔄 Updating Your Deployment
 
-1. Go to [railway.app](https://railway.app)
-2. Sign up with GitHub
-3. Create new project → Deploy from GitHub repo
-4. Add PostgreSQL service
-5. Add environment variables
-6. Deploy
+### Frontend Updates
+- Push changes to GitHub → Vercel auto-deploys
+- Or manually redeploy in Vercel dashboard
 
-Railway offers $5 free credit monthly, which usually covers small projects.
+### Backend Updates
+- Push changes to GitHub → Render auto-deploys
+- Or manually redeploy in Render dashboard
 
----
-
-## Code Changes Made
-
-The following changes have been implemented to support production deployment:
-
-### 1. Axios Configuration (`apps/frontend/src/lib/axios.ts`)
-- Created a centralized axios instance that uses `VITE_API_URL` environment variable
-- In development: Uses relative URLs (works with Vite proxy)
-- In production: Uses the full backend URL from environment variable
-
-### 2. Updated Service Files
-- Updated `apps/frontend/src/services/getAllRequests.ts`
-- Updated `apps/frontend/src/services/getEquipmentRequests.ts`
-- Updated `apps/frontend/src/services/getTranslatorRequests.ts`
-- Updated `apps/frontend/src/routes/AllServiceRequests.tsx`
-- Updated `apps/frontend/src/routes/Directions.tsx`
-
-### 3. Backend CORS Support
-- Added CORS middleware to `apps/backend/src/app.ts`
-- This allows the frontend (hosted on Vercel) to make requests to the backend (hosted on Render)
-
-### Note on Remaining Files
-
-Some files may still use `axios` directly instead of `apiClient`. These files will still work in development but may need updating for production. If you encounter CORS or connection issues, update those files to import and use `apiClient` from `src/lib/axios.ts` instead of `axios`.
+### Database Schema Changes
+1. Update Prisma schema locally
+2. Run `yarn workspace database push:prod` (using External URL)
+3. Push code changes → Backend will auto-redeploy
 
 ---
 
-## Cost Summary
-
-| Option | Frontend | Backend | Database | Total |
-|--------|----------|---------|----------|-------|
-| Render + Vercel | Free | Free* | Free** | **$0/month** |
-| All Render | Free | Free* | Free** | **$0/month** |
-| Railway | Included | Included | Included | **$5/month*** |
-
-\* Free tier spins down after inactivity (wakes up automatically)  
-\** Free tier has limitations (90 days data retention on Render)  
-\*** Railway gives $5 free credit monthly, usually enough for small projects
-
----
-
-## Tips for Resume Projects
-
-1. **First Request Slowdown:** Free Render backend sleeps after 15 min. The first request after sleep takes ~30 seconds. This is fine for resume demos - just mention it if asked.
-
-2. **Database Retention:** Render free tier databases delete after 90 days of no usage. For a resume project, this is usually fine.
-
-3. **Custom Domain:** Vercel allows free custom domains. You can add your own domain if you have one.
-
-4. **Monitoring:** Set up basic monitoring to keep services awake if needed (Render has built-in monitoring).
-
-5. **Backup:** For important demo data, export your database periodically.
-
----
-
-## Troubleshooting
+## 🐛 Troubleshooting
 
 ### Backend Won't Start
+- **Check Render logs** for error messages
+- **Verify environment variables** are set correctly
+- **Ensure database is running** (not paused)
+- **Check build command** includes `corepack enable`
 
-**Check the logs in Render:**
-1. Go to your service → "Logs" tab
-2. Look for error messages (usually in red)
-
-**Common issues:**
-- **Port error:** Make sure `BACKEND_PORT=$PORT` is set (Render provides `PORT` automatically)
-- **Database connection:** Use the **Internal Database URL** (not External) for `POSTGRES_URL`
-- **Build fails:** Verify build command includes `corepack enable`
-- **Missing env vars:** Ensure all required environment variables are set
-
-**Quick fixes:**
-- If you see "Missing PORT environment variable": Set `BACKEND_PORT=$PORT` in env vars
-- If database connection fails: Double-check you're using Internal Database URL
-- If build fails: Check that build command has `corepack enable` at the start
-
-### Frontend Build Fails on Vercel (Yarn Version Error)
-
-**Error:** `error Couldn't find any versions for "common" that matches "workspace:*"` or `yarn install v1.22.19`
-
-**Problem:** Vercel is using Yarn v1 instead of Yarn 4.7.0
-
-**Solution:**
-1. Go to Vercel project settings → "Settings" → "Environment Variables"
-2. Add environment variable:
-   - **Key:** `ENABLE_EXPERIMENTAL_COREPACK`
-   - **Value:** `1`
-3. Go to "General" (or "Build & Development Settings")
-4. Set **Install Command** to: Leave empty
-5. Set **Build Command** to: `corepack enable && corepack prepare yarn@4.7.0 --activate && yarn install && cd apps/frontend && yarn build`
-6. Save and redeploy
-
-**Why this works:** The `ENABLE_EXPERIMENTAL_COREPACK=1` environment variable tells Vercel to enable Corepack support, which allows it to use the Yarn version specified in your `package.json` (Yarn 4.7.0) instead of the system Yarn v1. This is the recommended approach for Yarn 2+ on Vercel.
-
-### Frontend Can't Connect to Backend
-- Check CORS settings in backend (already enabled in code)
-- Verify backend URL is correct in frontend env vars (`VITE_API_URL`)
-- Check browser console for errors
-- Make sure backend is running (check Render dashboard)
+### Frontend Build Fails
+- **Verify `ENABLE_EXPERIMENTAL_COREPACK=1`** is set
+- **Check build command** includes `corepack enable`
+- **Verify all environment variables** are set
 
 ### Database Connection Issues
-- Use **Internal Database URL** for Render services (between Render services)
-- Use **External Database URL** for local connections (your computer)
-- Check database is running (not paused) in Render dashboard
-- Verify `POSTGRES_URL` format: `postgresql://user:password@host:port/database`
+- **Use Internal URL** for Render services
+- **Use External URL** for local connections
+- **Check database is not paused** in Render dashboard
 
-### Need More Help?
+### CORS Errors
+- Backend has CORS enabled in code
+- Verify `VITE_API_URL` matches your backend URL exactly
+- Check browser console for specific error messages
 
-See `DEPLOYMENT_TROUBLESHOOTING.md` for detailed troubleshooting steps for each error type.
+### Backend Sleeps (Free Tier)
+- First request after 15 min inactivity takes ~30 seconds
+- This is normal for free tier
+- Consider upgrading to paid tier for production use
 
 ---
 
-## When to Redeploy
+## 💰 Cost Summary
 
-### When Changes Require Redeployment:
+| Service | Tier | Cost |
+|---------|------|------|
+| Render Database | Free | $0/month* |
+| Render Backend | Free | $0/month** |
+| Vercel Frontend | Free | $0/month |
+| **Total** | | **$0/month** |
 
-**Frontend Changes (UI, Components, Routes, etc.):**
-- ✅ Code changes in `apps/frontend/src/`
-- ✅ New environment variables
-- ✅ Auth0 configuration changes
-- ✅ Build configuration changes
-- **Action:** Push to GitHub → Vercel auto-deploys (or manually redeploy in Vercel dashboard)
+\* Free tier: 90 days data retention  
+\** Free tier: Spins down after 15 min inactivity (wakes automatically)
 
-**Backend Changes (API, Routes, Services, etc.):**
-- ✅ Code changes in `apps/backend/src/`
-- ✅ Database schema changes (after running migrations)
-- ✅ New environment variables
-- ✅ Package.json changes
-- **Action:** Push to GitHub → Render auto-deploys (or manually redeploy in Render dashboard)
+---
 
-### When Changes DON'T Require Redeployment:
+## 📚 Additional Resources
 
-- ❌ Database data changes (just updates in the database)
-- ❌ Environment variable changes in dashboard (just update in Vercel/Render settings)
+- [Render Documentation](https://render.com/docs)
+- [Vercel Documentation](https://vercel.com/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Auth0 Documentation](https://auth0.com/docs)
 
-### Best Practice Workflow:
+---
 
-1. **Make all your changes locally** (UI updates, Auth0 setup, etc.)
-2. **Test locally** to make sure everything works
-3. **Commit and push to GitHub** - this will trigger automatic deployments
-4. **Update environment variables** in Vercel/Render dashboards if needed
-5. **Wait for deployments to complete** (2-3 minutes each)
-6. **Test the live site**
+## 🎯 Quick Reference
 
-**Tip:** You can make multiple changes and push them all at once. Both Vercel and Render will rebuild, so you don't need to redeploy after each small change.
+**Backend URL:** `https://your-backend-name.onrender.com`  
+**Frontend URL:** `https://your-project.vercel.app`  
+**Database:** Render PostgreSQL (Internal URL for backend, External URL for local)
 
-## Next Steps
+**Key Environment Variables:**
+- `POSTGRES_URL` - Database connection (Internal URL in Render)
+- `VITE_API_URL` - Backend API URL (in Vercel)
+- `VITE_AUTH0_DOMAIN` - Auth0 domain (in Vercel)
+- `VITE_AUTH0_CLIENT_ID` - Auth0 client ID (in Vercel)
+- `VITE_GOOGLE_MAPS_API_KEY` - Google Maps key (in Vercel)
 
-After deployment:
-1. Test all functionality (especially login!)
-2. Update your resume with the live URL
-3. Add a note about the free tier limitations (sleeping backend) if needed
-4. Consider setting up a simple health check to keep backend awake during demo periods
+---
+
+**Need Help?** Check the logs in Render/Vercel dashboards for detailed error messages.

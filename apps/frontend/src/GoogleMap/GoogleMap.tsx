@@ -1,19 +1,38 @@
 import React, {RefObject, useEffect, useRef, useState} from 'react';
 import GoogleMap from "@/GoogleMap/GoogleMap.ts";
-import {Hospital, Department, Graph} from '@/routes/Directions.tsx'
 
 const API_KEY: string = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 
 
+export type StepInfo = {
+    htmlInstruction: string;
+    plainInstruction: string;
+    distanceText?: string;
+    durationText?: string;
+};
+
+export type IndoorStepInfo = {
+    instruction: string;
+    path: { lat: number; lng: number }[];
+    type: 'parking' | 'indoor';
+};
+
 export interface GoogleMapProps {
-    editor: boolean
+    editor: boolean;
     autoCompleteRef: RefObject<HTMLInputElement | null>;
-    hospital: Hospital | undefined;
-    department: Department | undefined;
-    graph: Graph | undefined;
+    // For runtime, we don't depend on strong typing of these;
+    // they are only forwarded to the underlying GoogleMap class.
+    hospital: any;
+    department: any;
+    graph: any;
     mode: string | undefined;
     zoomFlag: boolean;
+    activeStepIndex?: number;
+    onStepsUpdate?: (steps: StepInfo[]) => void;
+    onIndoorStepsUpdate?: (steps: IndoorStepInfo[]) => void;
+    onIndoorDirectionsUpdate?: (directions: IndoorDirectionStep[]) => void;
+    editableNodes?: { nodeId: number; lat: number; lng: number }[];
 }
 
 
@@ -60,7 +79,16 @@ const GGMap = (props: GoogleMapProps) => {
         console.log('UseEffect');
         if (!map) return;
         map.update(props);
-    }, [props.hospital, props.department, props.graph, props.mode, props.zoomFlag]);
+    }, [
+        props.hospital,
+        props.department,
+        props.graph,
+        props.mode,
+        props.zoomFlag,
+        props.activeStepIndex,
+        props.onStepsUpdate,
+        props.onIndoorStepsUpdate,
+    ]);
 
     return (
         <div

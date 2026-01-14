@@ -1,12 +1,16 @@
+// @ts-expect-error explicit .tsx import to avoid pulling in the non-React map class
 import GGMap from "@/GoogleMap/GoogleMap.tsx";
 import React, {useEffect, useRef, useState} from 'react';
+// @ts-expect-error icon typings not bundled in this workspace
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCar, faWalking, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+// @ts-expect-error icon typings not bundled in this workspace
+import { faCar, faWalking, faInfoCircle, faArrowLeft, faArrowRight, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 
-import {API_ROUTES} from "common/src/constants.ts";
+// @ts-expect-error path aliases use compiled outputs
+import {API_ROUTES} from "common/src/constants";
 import apiClient from "../lib/axios";
-import {Label} from "@/components/ui/label.tsx";
+import {Label} from "@/components/ui/label";
 import {
     Select,
     SelectContent,
@@ -15,10 +19,10 @@ import {
     SelectLabel,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select.tsx";
-import {Button} from "@/components/ui/button.tsx";
-import {cn} from "@/lib/utils.ts";
-import {Separator} from "@/components/ui/separator.tsx";
+} from "@/components/ui/select";
+import {Button} from "@/components/ui/button";
+import {cn} from "@/lib/utils";
+import {Separator} from "@/components/ui/separator";
 
 export type Hospital = {
     hospitalId: number
@@ -52,6 +56,13 @@ export type Graph = {
     west: number
 }
 
+type StepInfo = {
+    htmlInstruction: string;
+    plainInstruction: string;
+    distanceText?: string;
+    durationText?: string;
+};
+
 interface DirectionsProps {
     editor: boolean
 }
@@ -62,57 +73,75 @@ export default function Directions(props: DirectionsProps) {
     const autocompleteRef = useRef<HTMLInputElement>(null);
 
     const [data, setData] = useState<Hospital[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
     const [hospital, setHospital] = useState<Hospital | undefined>();
     const [mode, setMode] = useState<string | undefined>("DRIVING");
     const [graph, setGraph] = useState<Graph | undefined>();
     const [department, setDepartment] = useState<Department | undefined>();
+    const [steps, setSteps] = useState<StepInfo[]>([]);
+    const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
+    const [indoorSteps, setIndoorSteps] = useState<{ instruction: string; path: { lat: number; lng: number }[]; type: 'parking' | 'indoor' }[]>([]);
+    const [indoorDirections, setIndoorDirections] = useState<{ idx: number; instructions: string; icon: string; time: number; distanceImp: string; distanceMet: string }[]>([]);
+    const [currentIndoorStep, setCurrentIndoorStep] = useState<number>(-1);
+    const [units, setUnits] = useState<'Imperial' | 'Metric'>('Imperial');
 
     const [allGraphs, setAllGraphs] = useState<Graph[]>([]);
 
     const [zoomFlag, setZoomFlag] = useState<boolean>(false);
+    const speechEnabled = typeof window !== "undefined" && "speechSynthesis" in window;
 
     useEffect(() => {
         const fetchHospitals = async () => {
+            setIsLoading(true);
+            setError(null);
             try {
+                const apiUrl = apiClient.defaults.baseURL + API_ROUTES.DEPARTMENT;
                 console.log('Fetching hospitals from:', API_ROUTES.DEPARTMENT);
-                console.log('Full API URL:', apiClient.defaults.baseURL + API_ROUTES.DEPARTMENT);
+                console.log('Full API URL:', apiUrl);
                 
                 const response = await apiClient.get(API_ROUTES.DEPARTMENT);
                 
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                console.log('Response data type:', typeof response.data);
-                console.log('Response data is array?', Array.isArray(response.data));
-                console.log('Response data length:', Array.isArray(response.data) ? response.data.length : 'N/A');
+                console.log('Response received:', {
+                    status: response.status,
+                    dataType: typeof response.data,
+                    isArray: Array.isArray(response.data),
+                    length: Array.isArray(response.data) ? response.data.length : 'N/A'
+                });
                 
                 // The backend returns an array directly, so response.data should be the array
-                if (Array.isArray(response.data)) {
-                    console.log(`Successfully loaded ${response.data.length} hospitals`);
-                    if (response.data.length > 0) {
-                        console.log('Sample hospital:', {
-                            hospitalId: response.data[0].hospitalId,
-                            name: response.data[0].name,
-                            departmentsCount: response.data[0].Departments?.length || 0
-                        });
-                    }
-                    setData(response.data as Hospital[]);
-                } else {
-                    console.error('Unexpected response format. Expected array, got:', typeof response.data);
-                    console.error('Response data:', response.data);
-                    setData([]);
+                const hospitalsData = Array.isArray(response.data) ? response.data : [];
+                if (hospitalsData.length > 0) {
+                    console.log(`Successfully loaded ${hospitalsData.length} hospitals`);
+                    console.log('Sample hospital:', {
+                        hospitalId: hospitalsData[0].hospitalId,
+                        name: hospitalsData[0].name,
+                        departmentsCount: hospitalsData[0].Departments?.length || 0
+                    });
                 }
+                setData(hospitalsData as Hospital[]);
+                setError(null);
             } catch (error: any) {
                 console.error('Error fetching hospitals:', error);
+                // More detailed error logging
                 if (error.response) {
-                    console.error('Error response status:', error.response.status);
-                    console.error('Error response data:', error.response.data);
+                    console.error('Response error:', {
+                        status: error.response.status,
+                        statusText: error.response.statusText,
+                        data: error.response.data
+                    });
+                    setError(`Server error: ${error.response.status} ${error.response.statusText}`);
                 } else if (error.request) {
                     console.error('No response received. Request:', error.request);
+                    setError('Unable to connect to server. Is the backend running on port 3001?');
                 } else {
-                    console.error('Error setting up request:', error.message);
+                    console.error('Request setup error:', error.message);
+                    setError(`Error: ${error.message}`);
                 }
                 setData([]);
+            } finally {
+                setIsLoading(false);
             }
         };
         
@@ -169,6 +198,51 @@ export default function Directions(props: DirectionsProps) {
         setMode(value);
     }
 
+    const handleStepsUpdate = (incomingSteps: StepInfo[]) => {
+        setSteps(incomingSteps);
+        setActiveStepIndex(0);
+    }
+
+    const handleIndoorStepsUpdate = (incomingIndoorSteps: { instruction: string; path: { lat: number; lng: number }[]; type: 'parking' | 'indoor' }[]) => {
+        setIndoorSteps(incomingIndoorSteps);
+    }
+
+    const handleIndoorDirectionsUpdate = (directions: { idx: number; instructions: string; icon: string; time: number; distanceImp: string; distanceMet: string }[]) => {
+        console.log('Received indoor directions:', directions);
+        setIndoorDirections(directions);
+        setCurrentIndoorStep(directions.length > 0 ? 0 : -1);
+    }
+
+    const handleIndoorStepChange = (newStep: number) => {
+        if (newStep >= 0 && newStep < indoorDirections.length) {
+            setCurrentIndoorStep(newStep);
+            const step = indoorDirections[newStep];
+            if (step?.instructions) {
+                speakStep(step.instructions);
+            }
+            // TODO: Highlight the current step on the map
+            // This would require passing the step index to GoogleMap component
+        }
+    }
+
+    const speakStep = (text: string) => {
+        if (!speechEnabled || !text) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    const goToStep = (nextIndex: number) => {
+        if (nextIndex < 0 || nextIndex >= steps.length) return;
+        setActiveStepIndex(nextIndex);
+        const step = steps[nextIndex];
+        if (step?.plainInstruction) {
+            speakStep(step.plainInstruction);
+        }
+    }
+
     return (
         <div className="flex flex-col lg:flex-row flex-1 min-h-screen">
             <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-white">
@@ -221,7 +295,17 @@ export default function Directions(props: DirectionsProps) {
 
                 <div className="mb-6">
                     <Label className="mb-2 block text-sm font-medium text-[#03045e]">Destination Hospital</Label>
-                    {data.length === 0 ? (
+                    {isLoading ? (
+                        <div className="text-sm text-blue-800 bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-4">
+                            <p className="font-semibold mb-1">Loading hospitals...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="text-sm text-red-800 bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-4">
+                            <p className="font-semibold mb-1">Error loading hospitals</p>
+                            <p className="mb-2">{error}</p>
+                            <p className="text-xs mt-2">Check the browser console for more details.</p>
+                        </div>
+                    ) : data.length === 0 ? (
                         <div className="text-sm text-amber-800 bg-amber-50 border-2 border-amber-200 rounded-lg p-4 mb-4">
                             <p className="font-semibold mb-1">No hospitals found in database.</p>
                             <p className="mb-2">Please run the seed file to add hospitals:</p>
@@ -339,21 +423,160 @@ export default function Directions(props: DirectionsProps) {
 
                 {/* Step-by-step directions panel for external route */}
                 {!props.editor && (
-                    <div
-                        id="directions-panel-container"
-                        className="mt-6 bg-white border-2 border-[#0077b6]/20 rounded-lg shadow-sm max-h-64 overflow-y-auto"
-                    >
+                    <div className="mt-6 bg-white border-2 border-[#0077b6]/20 rounded-lg shadow-sm">
                         <div className="px-4 py-3 border-b border-gray-200">
                             <h3 className="text-sm font-semibold text-[#03045e]">
                                 Directions (step by step)
                             </h3>
                             <p className="mt-1 text-xs text-gray-500">
-                                After choosing a hospital and entering a start location, turn‑by‑turn
-                                directions will appear here.
+                                After choosing a hospital and entering a start location, turn‑by‑turn directions will appear here. Use the controls to step through each instruction and play text-to-speech.
                             </p>
                         </div>
-                        {/* Google Maps DirectionsRenderer will populate this inner panel */}
-                        <div id="directions-panel" className="px-4 py-3 text-sm text-gray-700 space-y-1" />
+                        <div className="px-4 py-3 space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="text-xs text-gray-600">
+                                    {steps.length > 0 ? `Step ${activeStepIndex + 1} of ${steps.length}` : "No directions yet"}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={activeStepIndex <= 0}
+                                        onClick={() => goToStep(activeStepIndex - 1)}
+                                    >
+                                        Back
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={steps.length === 0 || activeStepIndex >= steps.length - 1}
+                                        onClick={() => goToStep(activeStepIndex + 1)}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="max-h-72 overflow-y-auto space-y-2">
+                                {steps.length === 0 && indoorSteps.length === 0 && (
+                                    <div className="text-xs text-gray-500">
+                                        Once directions are retrieved, they’ll show here.
+                                    </div>
+                                )}
+                                {steps.map((step, idx) => (
+                                    <div
+                                        key={`external-${idx}`}
+                                        className={`border rounded-lg px-3 py-2 text-sm transition-colors ${
+                                            idx === activeStepIndex
+                                                ? "border-[#0077b6] bg-[#e1f2ff]"
+                                                : "border-gray-200 bg-white"
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[11px] text-gray-500">To Hospital - Step {idx + 1}</span>
+                                            <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                                                {step.distanceText && <span>{step.distanceText}</span>}
+                                                {step.durationText && <span>• {step.durationText}</span>}
+                                                <button
+                                                    type="button"
+                                                    aria-label="Play step audio"
+                                                    className="text-[#0077b6] hover:text-[#005a8a] font-semibold"
+                                                    onClick={() => speakStep(step.plainInstruction)}
+                                                >
+                                                    🔊
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div
+                                            className="mt-1 text-[#03045e]"
+                                            dangerouslySetInnerHTML={{ __html: step.htmlInstruction }}
+                                        />
+                                    </div>
+                                ))}
+                                
+                                {/* Show step-by-step indoor directions after external route */}
+                                {indoorDirections.length > 0 && (
+                                    <>
+                                        <div className="border-t border-gray-300 my-3 pt-3">
+                                            <h4 className="text-xs font-semibold text-[#03045e] mb-2">After arriving at the hospital:</h4>
+                                        </div>
+                                        
+                                        {/* Indoor directions navigation */}
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <div className="text-xs text-gray-600">
+                                                {currentIndoorStep >= 0 ? `Step ${currentIndoorStep + 1} of ${indoorDirections.length}` : "Indoor Navigation"}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={currentIndoorStep < 0}
+                                                    onClick={() => handleIndoorStepChange(currentIndoorStep - 1)}
+                                                >
+                                                    <FontAwesomeIcon icon={faArrowLeft} className="mr-1" />
+                                                    Back
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={currentIndoorStep >= indoorDirections.length - 1}
+                                                    onClick={() => handleIndoorStepChange(currentIndoorStep + 1)}
+                                                >
+                                                    Next
+                                                    <FontAwesomeIcon icon={faArrowRight} className="ml-1" />
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {/* Display indoor step-by-step directions */}
+                                        <div className="space-y-2">
+                                            {indoorDirections.map((dir, idx) => {
+                                                const icon = dir.icon === 'left' ? faArrowLeft : 
+                                                           dir.icon === 'right' ? faArrowRight : 
+                                                           faArrowUp;
+                                                return (
+                                                    <div
+                                                        key={`indoor-dir-${idx}`}
+                                                        className={`border rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer ${
+                                                            idx === currentIndoorStep
+                                                                ? "border-[#00b4d8] bg-cyan-100"
+                                                                : "border-gray-200 bg-white hover:bg-gray-50"
+                                                        }`}
+                                                        onClick={() => handleIndoorStepChange(idx)}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <FontAwesomeIcon 
+                                                                    icon={icon} 
+                                                                    className={`text-[#00b4d8] ${idx === currentIndoorStep ? 'text-[#0077b6]' : ''}`}
+                                                                />
+                                                                <span className="text-[#03045e] font-medium">{dir.instructions}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[11px] text-gray-500">
+                                                                    {units === 'Imperial' ? dir.distanceImp : dir.distanceMet}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    aria-label="Play step audio"
+                                                                    className="text-[#0077b6] hover:text-[#005a8a] font-semibold"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        speakStep(dir.instructions);
+                                                                    }}
+                                                                >
+                                                                    🔊
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -384,6 +607,10 @@ export default function Directions(props: DirectionsProps) {
                     graph={graph}
                     mode={mode}
                     zoomFlag={zoomFlag}
+                    activeStepIndex={steps.length ? activeStepIndex : undefined}
+                    onStepsUpdate={handleStepsUpdate}
+                    onIndoorStepsUpdate={handleIndoorStepsUpdate}
+                    onIndoorDirectionsUpdate={handleIndoorDirectionsUpdate}
                 />
             </div>
         </div>
