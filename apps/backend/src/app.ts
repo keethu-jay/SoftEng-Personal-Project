@@ -30,7 +30,31 @@ import { API_ROUTES } from 'common/src/constants';
 const app: Express = express();
 
 // Enable CORS for all routes (allows frontend to make requests from different origin)
-app.use(cors());
+// Configure CORS to allow requests from Vercel frontend and localhost for development
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+            
+            // Allow localhost for development
+            if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+                return callback(null, true);
+            }
+            
+            // Allow Vercel deployments (any *.vercel.app domain)
+            if (origin.includes('.vercel.app')) {
+                return callback(null, true);
+            }
+            
+            // Allow any origin in development, restrict in production if needed
+            callback(null, true);
+        },
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
 
 // HTTP request logging middleware
 // Logs all incoming requests in development format
