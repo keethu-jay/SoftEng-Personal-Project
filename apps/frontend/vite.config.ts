@@ -15,9 +15,18 @@ export default defineConfig({
     },
     server: {
         host: 'localhost',
-        port: parseInt(process.env.FRONTEND_PORT),
+        // Allow running without a .env file by falling back to Vite's default port.
+        port: Number.parseInt(process.env.FRONTEND_PORT ?? '5173', 10),
         proxy: {
-            '/api': process.env.BACKEND_URL,
+            // Proxy API calls in dev so relative `/api/...` requests work.
+            // BACKEND_URL is preferred; otherwise build it from BACKEND_PORT or default 3001.
+            '/api': {
+                target:
+                    process.env.BACKEND_URL ??
+                    `http://localhost:${process.env.BACKEND_PORT ?? process.env.PORT ?? '3001'}`,
+                changeOrigin: true,
+                secure: false,
+            },
         },
         watch: {
             usePolling: true,

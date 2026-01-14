@@ -73,8 +73,5 @@
         "vite": "^6.2.3",
         "vite-plugin-eslint": "^1.8.1",
         "vitest": "^3.0.9"
-    },
-    "compilerOptions": {
-        "strict": true
     }
 }

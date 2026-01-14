@@ -10,7 +10,7 @@ import Path from '@/LeafletMap/Path.tsx';
 
 import {Coordinates} from 'common/src/constants.ts'
 import {useState, useEffect} from "react";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 
 import {API_ROUTES} from "common/src/constants.ts";
 // import {Graph} from "common/src/bfs.ts";
@@ -32,7 +32,7 @@ export default function LeafletMap() {
     const end = 'helpdesk';
 
     useEffect(() => {
-        axios.get(API_ROUTES.PATHFIND + '?start=' + start + '&end=' + end)
+        apiClient.get(API_ROUTES.PATHFIND + '?start=' + start + '&end=' + end)
             .then((response => {
                 setCoords((response.data as Coordinates[]));
             }));

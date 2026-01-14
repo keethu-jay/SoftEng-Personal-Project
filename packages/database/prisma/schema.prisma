@@ -13,16 +13,22 @@ datasource db {
 
 model Employee {
   employeeId              Int              @id @default(autoincrement())
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
+  createdAt               DateTime?        @default(now())
+  updatedAt               DateTime?        @updatedAt
   email                   String           @unique
-  password                String
+  password                String?         @default("demo")
   firstName               String
   middleInitial           String?
   lastName                String
   occupation              String
+  dateOfBirth             DateTime?
+  phoneNumber             String?
+  pronoun                 String?
+  userType                String?
   serviceRequestsAssigned ServiceRequest[] @relation(name: "assignedTo")
   serviceRequestsMade     ServiceRequest[] @relation(name: "requestedBy")
+  posts                   Post[]           @relation(name: "poster")
+  replies                 Reply[]          @relation(name: "replier")
 }
 
 //**
@@ -123,11 +129,11 @@ enum RoomStatus {
 model Hospital {
   hospitalId  Int    @id @default(autoincrement())
   name        String @unique
-  address     String
-  placeId     String
-  defaultLat  Float
-  defaultLng  Float
-  defaultZoom Int
+  address     String? @default("")
+  placeId     String? @default("")
+  defaultLat  Float?  @default(0.0)
+  defaultLng  Float?  @default(0.0)
+  defaultZoom Int?    @default(10)
 
   Departments Department[]
 }
@@ -137,52 +143,129 @@ model Department {
   name         String
   floorNum     Int
   room         String
-  building     String
+  building     String? @default("")
+  buildingId   Int?
+  floorGraphId Int?
+  hours        String?
+  services     String?
+  telephone    String?
 
-  lat Float
-  lng Float
+  lat Float? @default(0.0)
+  lng Float? @default(0.0)
 
-  hospitalId Int
-  Hospital   Hospital @relation(fields: [hospitalId], references: [hospitalId])
+  hospitalId Int?
+  Hospital   Hospital? @relation(fields: [hospitalId], references: [hospitalId])
 
-  graphId Int
-  Graph   Graph @relation(fields: [graphId], references: [graphId])
+  graphId Int?
+  Graph   Graph? @relation(fields: [graphId], references: [graphId])
 
   ServiceRequests ServiceRequest[]
 }
 
 model Graph {
-  graphId Int    @id @default(autoincrement())
-  name    String
+  graphId   Int    @id @default(autoincrement())
+  name      String? @default("")
+  graphName String?
+  graphType String?
 
-  imageURL String
-  north    Float
-  south    Float
-  east     Float
-  west     Float
+  imageURL String? @default("")
+  north    Float?  @default(0.0)
+  south    Float?  @default(0.0)
+  east     Float?  @default(0.0)
+  west     Float?  @default(0.0)
 
   Departments Department[]
   Nodes       Node[]
+  Edges       Edge[]
 }
 
 model Node {
-  nodeId    Int    @id @default(autoincrement())
-  tags      String
-  lat       Float
-  lng       Float
-  edgeStart Edge[] @relation(name: "edgeS")
-  edgeEnd   Edge[] @relation(name: "edgeE")
-  graphId   Int
-  Graph     Graph  @relation(fields: [graphId], references: [graphId])
+  nodeId         Int    @id @default(autoincrement())
+  name           String?
+  type           String?
+  tags           String? @default("")
+  connectedNodeId Int?
+  lat            Float
+  lng            Float
+  edgeStart      Edge[] @relation(name: "edgeS")
+  edgeEnd        Edge[] @relation(name: "edgeE")
+  graphId        Int?
+  Graph          Graph? @relation(fields: [graphId], references: [graphId])
 }
 
 model Edge {
   edgeId      Int  @id @default(autoincrement())
-  weight      Int
+  weight      Int?  @default(0)
+  name        String?
+  graphId     Int?
+  Graph       Graph? @relation(fields: [graphId], references: [graphId])
   startNodeId Int
   endNodeId   Int
   startNode   Node @relation(name: "edgeS", fields: [startNodeId], references: [nodeId], onDelete: Cascade)
   endNode     Node @relation(name: "edgeE", fields: [endNodeId], references: [nodeId], onDelete: Cascade)
+}
+
+model Post {
+  postId    Int       @id @default(autoincrement())
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  title     String
+  content   String
+  email     String
+  
+  posterId Int?
+  poster   Employee? @relation(name: "poster", fields: [posterId], references: [employeeId])
+  
+  replies  Reply[]
+}
+
+model Reply {
+  replyId   Int       @id @default(autoincrement())
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  content   String
+  email     String?   @default("")
+  
+  postId Int
+  post   Post   @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  
+  replierId Int?
+  replier   Employee? @relation(name: "replier", fields: [replierId], references: [employeeId])
+}
+
+// Legacy tables - preserved to avoid data loss
+model Building {
+  buildingId Int    @id @default(autoincrement())
+  name       String?
+  address    String?
+  hospitalId Int?
+}
+
+model FloorGraph {
+  floorGraphId    Int    @id @default(autoincrement())
+  name            String?
+  buildingId      Int?
+  floorNum        Int?
+  graphId         Int?
+  image           String?
+  imageBoundsEast Float?
+  imageBoundsNorth Float?
+  imageBoundsSouth Float?
+  imageBoundsWest Float?
+  imageRotation   Float?
+}
+
+model ParkingGraph {
+  parkingGraphId Int    @id @default(autoincrement())
+  name           String?
+  graphId        Int?
+  hospitalId     Int?
+}
+
+model Algorithm {
+  algorithmId Int     @id @default(autoincrement())
+  name        String?
+  isActive    Boolean?
 }
 
 // model Hospital {

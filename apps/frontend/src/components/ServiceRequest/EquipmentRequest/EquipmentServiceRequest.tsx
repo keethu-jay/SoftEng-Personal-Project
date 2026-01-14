@@ -5,7 +5,7 @@ import {Label} from "@/components/ui/label.tsx";
 import {ScrollArea} from "@/components/ui/scrollarea.tsx";
 import {useState} from "react";
 import {API_ROUTES} from "common/src/constants.ts";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import ReturnEquipmentRequest from "@/components/ServiceRequest/EquipmentRequest/ReturnEquipmentRequest.tsx";
 import SubmissionReqPopup from "@/components/SubmissionReqPopup.tsx";
 import ReturnSanitationRequest from "@/components/ServiceRequest/SanitationRequest/ReturnSanitationRequest.tsx";
@@ -48,33 +48,43 @@ export default function EquipmentServiceRequest() {
         e.preventDefault();
         setSubmitted(false);
 
-        axios
-            .post(API_ROUTES.SERVICEREQS + "/equipment", form)
-            .then(() => {
+        // For demo: fill in demo IDs and defaults if omitted
+        const payload = {
+            ...form,
+            employeeRequestedById: form.employeeRequestedById || 1,
+            departmentUnderId: form.departmentUnderId || 1,
+            requestStatus: form.requestStatus || 'Unassigned',
+            priority: form.priority || 'LOW',
+        };
+
+        apiClient
+            .post(API_ROUTES.SERVICEREQS + "/equipment", payload)
+            .then((response) => {
+                console.log('Equipment request created:', response.data);
                 setSubmitted(true);
             })
             .catch((err) => {
-                console.error("Error submitting sanitation request:", err);
+                console.error("Error submitting equipment request:", err);
+                alert("Failed to submit request. Check console for details.");
             });
     };
 
     return (
         <>
             {!submitted ?
-                <ScrollArea className="max-h-[95vh] overflow-y-auto pr-4 w-full max-w-screen-lg mx-auto bg-zinc-200">
-                <div className="grid place-items-center h-full items-center">
-                    <div className="bg-blue-200 bg-opacity-60 rounded-3xl px-6 py-4 max-w-5xl w-full mx-auto">
+                <ScrollArea className="max-h-[95vh] overflow-y-auto pr-4 w-full max-w-screen-lg mx-auto bg-white">
+                <div className="grid place-items-center h-full items-center py-6">
+                    <div className="bg-[#0077b6]/90 text-white rounded-3xl px-6 py-4 max-w-5xl w-full mx-auto shadow-lg border-2 border-black mb-4">
                         <h2 className="text-4xl font-bold text-left">Request a Medical Device</h2>
                     </div>
                     <h6 className="pb-3 font-light">Christine Ngo & Keethu Jayamoorthy</h6>
                     <form onSubmit={onSubmit}>
                         <div>
-                            <Label className="pt-4 pb-2" htmlFor="employeeId">Employee ID</Label>
+                            <Label className="pt-4 pb-2" htmlFor="employeeId">Employee ID (optional)</Label>
                             <Input
-                                required
                                 type="number"
                                 id="employeeId"
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -85,12 +95,11 @@ export default function EquipmentServiceRequest() {
                         </div>
 
                         <div>
-                            <Label className="pt-4 pb-2" htmlFor="employeeName">Employee Name</Label>
+                            <Label className="pt-4 pb-2" htmlFor="employeeName">Employee Name (optional)</Label>
                             <Input
-                                required
                                 type="text"
                                 id="employeeName"
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -101,11 +110,10 @@ export default function EquipmentServiceRequest() {
                         </div>
 
                         <div>
-                            <Label className="pt-4 pb-2" htmlFor="department">Department</Label>
+                            <Label className="pt-4 pb-2" htmlFor="department">Department (optional)</Label>
                             <select
-                                required
                                 id="department"
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -140,7 +148,7 @@ export default function EquipmentServiceRequest() {
                             <Label className="pt-4 pb-2" htmlFor="roomNumber">Room Number</Label>
                             <Input
                                 required
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 type="text"
                                 id="roomNumber"
                                 onChange={(e) =>
@@ -156,7 +164,7 @@ export default function EquipmentServiceRequest() {
                             <Label className="pt-4 pb-2" htmlFor="medicalDevice">Medical Device</Label>
                             <Input
                                 required
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 type="text"
                                 id="medicalDevice"
                                 onChange={(e) =>
@@ -172,7 +180,7 @@ export default function EquipmentServiceRequest() {
                             <Label className="pt-4 pb-2" htmlFor="quantity">Quantity</Label>
                             <Input
                                 required
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 type="number"
                                 id="quantity"
                                 onChange={(e) =>
@@ -188,7 +196,7 @@ export default function EquipmentServiceRequest() {
                             <Label className="pt-4 pb-2" htmlFor="startDateTime">Start Date and Time</Label>
                             <Input
                                 required
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 type="datetime-local"
                                 id="startDateTime"
                                 onChange={(e) =>
@@ -206,7 +214,7 @@ export default function EquipmentServiceRequest() {
                                 required
                                 type="datetime-local"
                                 id="languageFrom"
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -220,7 +228,7 @@ export default function EquipmentServiceRequest() {
                             <Label className="pt-4 pb-2" htmlFor="signature">Signature</Label>
                             <Input
                                 required
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 type="text"
                                 id="signature"
                                 onChange={(e) =>
@@ -237,7 +245,7 @@ export default function EquipmentServiceRequest() {
                             <select
                                 required
                                 id="priority"
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -256,7 +264,7 @@ export default function EquipmentServiceRequest() {
                             <select
                                 required
                                 id="requestStatus"
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,

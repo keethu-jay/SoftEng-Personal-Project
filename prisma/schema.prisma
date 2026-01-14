@@ -12,3 +12,34 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model post {
+  postId    Int      @id @default(autoincrement())
+  title     String
+  content   String
+  email     String?
+  createdAt DateTime @default(now())
+  posterId  Int?
+  poster    employee? @relation(fields: [posterId], references: [employeeId])
+  replies   reply[]
+}
+
+model reply {
+  replyId   Int      @id @default(autoincrement())
+  content   String
+  email     String?
+  createdAt DateTime @default(now())
+  postId    Int
+  post      post     @relation(fields: [postId], references: [postId], onDelete: Cascade)
+  replierId Int?
+  replier   employee? @relation(fields: [replierId], references: [employeeId])
+}
+
+model employee {
+  employeeId Int      @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String   @unique
+  posts      post[]
+  replies    reply[]
+}

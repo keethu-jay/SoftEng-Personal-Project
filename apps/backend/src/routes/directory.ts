@@ -4,24 +4,32 @@ import { Prisma } from 'database';
 const router: Router = express.Router();
 
 router.get('/', async (req, res) => {
-    const data = await PrismaClient.hospital.findMany({
-        include: {
-            Departments: {
-                include: {
-                    Graph: true,
-                },
-                orderBy: {
-                    name: 'asc',
-                },
+    try {
+        // Fetch hospitals and departments separately to avoid nested include issues
+        const hospitals = await PrismaClient.hospital.findMany();
+        const departments = await PrismaClient.department.findMany({
+            include: {
+                Graph: true,
             },
-        },
-    });
-    if (!data) {
-        console.error('No data found');
-        res.sendStatus(204);
-    } else {
-        console.log(data);
+            orderBy: {
+                name: 'asc',
+            },
+        });
+
+        // Manually attach departments to their hospitals to match existing frontend expectations
+        const data = hospitals.map((h) => ({
+            ...h,
+            Departments: departments.filter((d) => d.hospitalId === h.hospitalId),
+        }));
+
+        console.log(`Found ${data.length} hospitals (manually joined with departments)`);
         res.json(data);
+    } catch (error) {
+        console.error('Error fetching hospitals/departments for directory:', error);
+        res.status(500).json({
+            error: 'Failed to load hospitals/departments',
+            details: String(error),
+        });
     }
 });
 
@@ -31,27 +39,17 @@ router.get('/:id/all', async function (req: Request, res: Response) {
     const departments = await PrismaClient.department.findMany({
         where: { hospitalId: hospitalId },
     });
-    // if there are no departments found
-    if (departments == null) {
-        console.error('No departments found in database');
-        res.sendStatus(204);
-    } else {
-        console.log(departments); // display department data to console
-        res.json(departments);
-    }
+    // Always return data, even if empty array
+    console.log(`Found ${departments.length} departments for hospital ${hospitalId}`);
+    res.json(departments);
 });
 
 // Returns all departments in the directory, if any
 router.get('/all', async function (req: Request, res: Response) {
     const departments = await PrismaClient.department.findMany();
-    // if there are no departments found
-    if (departments == null) {
-        console.error('No departments found in database');
-        res.sendStatus(204);
-    } else {
-        console.log(departments); // display department data to console
-        res.json(departments);
-    }
+    // Always return data, even if empty array (findMany never returns null)
+    console.log(`Found ${departments.length} departments`);
+    res.json(departments);
 });
 
 // post request to add departments to the database

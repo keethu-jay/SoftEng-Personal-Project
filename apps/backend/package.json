@@ -13,6 +13,7 @@
         "@swc/helpers": "^0.5.1",
         "common": "*",
         "cookie-parser": "~1.4.4",
+        "cors": "*",
         "database": "*",
         "dotenv": "*",
         "dotenv-cli": "*",
@@ -29,6 +30,7 @@
     },
     "devDependencies": {
         "@types/cookie-parser": "^1.4.8",
+        "@types/cors": "^2.8.19",
         "@types/express": "^5.0.1",
         "@types/http-errors": "^2.0.4",
         "@types/morgan": "^1.9.9",

@@ -2,13 +2,15 @@ import createError, { HttpError } from 'http-errors';
 import express, { Express, NextFunction, Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
+import cors from 'cors';
 import healthcheckRouter from './routes/healthcheck';
 import employeeRouter from './routes/employee.ts';
 import assignedRouter from './routes/assigned.ts';
 import servicereqsRouter from './routes/servicereqs.ts';
 import directoryRouter from './routes/directory.ts';
-// import pathfindRouter from './routes/pathfind.ts';
+import pathfindRouter from './routes/pathfind.ts';
 import pathfindingRouter from './routes/pathfinding.ts';
+import forumRouter from './routes/forum.ts';
 
 // const { auth, requiresAuth } = require('express-openid-connect');
 
@@ -16,6 +18,7 @@ import { API_ROUTES } from 'common/src/constants';
 
 const app: Express = express(); // Setup the backend
 // Setup generic middlewear
+app.use(cors()); // Enable CORS for all routes
 app.use(
     logger('dev', {
         stream: {
@@ -36,8 +39,9 @@ app.use(API_ROUTES.EMPLOYEE, employeeRouter);
 app.use(API_ROUTES.SERVICEREQS, servicereqsRouter);
 app.use(API_ROUTES.ASSIGNED, assignedRouter);
 app.use(API_ROUTES.DEPARTMENT, directoryRouter);
-// app.use(API_ROUTES.PATHFIND, pathfindRouter);
+app.use(API_ROUTES.PATHFIND, pathfindRouter);
 app.use(API_ROUTES.PATHFINDING, pathfindingRouter);
+app.use(API_ROUTES.FORUM, forumRouter);
 
 /**
  * Auth0
@@ -76,8 +80,11 @@ app.use((err: HttpError, req: Request, res: Response) => {
 
     res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-    // Reply with the error
-    res.status(err.status || 500);
+    // Reply with the error (ensure we actually end the response)
+    res.status(err.status || 500).json({
+        error: err.message,
+        status: err.status || 500,
+    });
 });
 
 // Export the backend, so that www.ts can start it

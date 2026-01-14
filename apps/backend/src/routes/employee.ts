@@ -34,6 +34,26 @@ router.post('/', async function (req: Request, res: Response) {
     res.sendStatus(200);
 });
 
+// Return an employee by email
+router.get('/user/:email', async function (req: Request, res: Response) {
+    const email = req.params.email;
+    // Find the employee with the email
+    const employee = await PrismaClient.employee.findUnique({
+        where: { email: email },
+    });
+
+    // If no employee with the email is found, send 404 and log it
+    if (employee == null) {
+        console.error(`The employee with email ${email} not found in database!`);
+        res.status(404).json({ error: 'Employee not found' });
+    }
+    // Otherwise send 200 and the data
+    else {
+        console.log(employee);
+        res.json(employee);
+    }
+});
+
 // Return an employee with specified id
 router.get('/:id', async function (req: Request, res: Response) {
     // Parse the id param into a variable

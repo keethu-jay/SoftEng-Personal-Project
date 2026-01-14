@@ -1,11 +1,10 @@
-import axios from 'axios';
+import apiClient from '../lib/axios';
 
-import { API_ROUTES } from '../../../../packages/common/src/constants.ts';
-import type {EquipmentRequest} from 'src/routes/AllServiceRequests.tsx';
+import type { ServiceRequest } from '@/routes/AllServiceRequests.tsx';
 
-async function getEquipmentRequests (): Promise<EquipmentRequest> {
-    const equipmentServices = (await axios.get('/api/servicereqs/equipment')).data;
-    return equipmentServices.data;
+async function getEquipmentRequests(): Promise<ServiceRequest[]> {
+    const res = await apiClient.get('/api/servicereqs/equipment');
+    return Array.isArray(res.data) ? (res.data as ServiceRequest[]) : [];
 }
 
 export default getEquipmentRequests;

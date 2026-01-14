@@ -1,5 +1,5 @@
 import React, { FormEvent, useState } from "react";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import { Button } from "@/components/ui/button.tsx";
 import {ScrollArea} from "@/components/ui/scrollarea.tsx";
 import { Input } from "@/components/ui/input.tsx";
@@ -38,34 +38,43 @@ export default function SanitationRequest() {
 
     const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // console.log(form);
         setSubmitted(false);
 
-        axios
-            .post(API_ROUTES.SERVICEREQS + "/sanitation", form)
-            .then(() => {
+        // For demo: fill in demo IDs and defaults if omitted
+        const payload = {
+            ...form,
+            employeeRequestedById: form.employeeRequestedById || 1,
+            departmentUnderId: form.departmentUnderId || 1,
+            requestStatus: form.requestStatus || 'Unassigned',
+            priority: form.priority || 'LOW',
+        };
+
+        apiClient
+            .post(API_ROUTES.SERVICEREQS + "/sanitation", payload)
+            .then((response) => {
+                console.log('Sanitation request created:', response.data);
                 setSubmitted(true);
             })
             .catch((err) => {
                 console.error("Error submitting sanitation request:", err);
+                alert("Failed to submit request. Check console for details.");
             });
     };
     return (
         <>
             {!submitted ?
-                <ScrollArea className="max-h-[95vh] overflow-y-auto pr-4 w-full max-w-screen-lg mx-auto bg-zinc-200">
-                <div className="grid items-start px-4 h-full w-full max-w-screen-md mx-auto">
-                    <div className="bg-blue-200 bg-opacity-60 rounded-3xl px-6 py-4 max-w-5xl w-full mx-auto">
+                <ScrollArea className="max-h-[95vh] overflow-y-auto pr-4 w-full max-w-screen-lg mx-auto bg-white">
+                <div className="grid items-start px-4 py-6 h-full w-full max-w-screen-md mx-auto">
+                    <div className="bg-[#0077b6]/90 text-white rounded-3xl px-6 py-4 max-w-5xl w-full mx-auto shadow-lg border-2 border-black mb-4">
                         <h2 className="text-4xl font-bold text-left">Request Sanitation</h2>
                     </div>
                     <h6 className="pb-3 font-light">Stuvat Dash & Brandon Small</h6>
                     <form onSubmit={onSubmit} className="flex flex-col">
 
                         <div>
-                            <Label className="pt-4 pb-2" htmlFor="employeeId">Employee ID</Label>
+                            <Label className="pt-4 pb-2" htmlFor="employeeId">Employee ID (optional)</Label>
                             <Input
-                                required
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 type="number"
                                 id="employeeId"
                                 onChange={(e) =>
@@ -78,13 +87,12 @@ export default function SanitationRequest() {
                         </div>
 
                         <div>
-                            <Label className="pt-4 pb-2" htmlFor="employeeName">Employee Name</Label>
+                            <Label className="pt-4 pb-2" htmlFor="employeeName">Employee Name (optional)</Label>
                             <Input
-                                required
                                 type="text"
                                 id="employeeName"
                                 // className='border border-gray-300 rounded-md p-2'
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -95,12 +103,11 @@ export default function SanitationRequest() {
                         </div>
 
                         <div>
-                            <Label className="pt-4 pb-2" htmlFor="department">Department</Label>
+                            <Label className="pt-4 pb-2" htmlFor="department">Department (optional)</Label>
                             <select
-                                required
                                 id="department"
                                 // className='border border-gray-300 rounded-md p-2'
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -135,7 +142,7 @@ export default function SanitationRequest() {
                         <Input
                             required
                             type="text"
-                            className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                            className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                             id="roomNum"
                             onChange={(e) =>
                                 setForm({ ...form, roomNum: e.target.value })
@@ -148,7 +155,7 @@ export default function SanitationRequest() {
                             required
                             id="type"
                             // className="border border-gray-300 rounded-md p-2"
-                            className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                            className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                             onChange={(e) =>
                                 setForm({ ...form, type: e.target.value })
                             }
@@ -168,7 +175,7 @@ export default function SanitationRequest() {
                             required
                             id="status"
                             // className="border border-gray-300 rounded-md p-2"
-                            className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                            className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                             onChange={(e) =>
                                 setForm({ ...form, status: e.target.value })
                             }
@@ -185,7 +192,7 @@ export default function SanitationRequest() {
                                 required
                                 id="priority"
                                 // className='border border-gray-300 rounded-md p-2'
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -206,7 +213,7 @@ export default function SanitationRequest() {
                                 required
                                 id="requestStatus"
                                 // className='border border-gray-300 rounded-md p-2'
-                                className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({
                                         ...form,
@@ -228,7 +235,7 @@ export default function SanitationRequest() {
                         <textarea
                             id="comments"
                             // className="border border-gray-300 rounded-md p-2 w-90"
-                            className = "w-80 h-8 rounded-md border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                            className = "w-80 min-h-20 rounded-xl border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                             onChange={(e) =>
                                 setForm({ ...form, comments: e.target.value })
                             }

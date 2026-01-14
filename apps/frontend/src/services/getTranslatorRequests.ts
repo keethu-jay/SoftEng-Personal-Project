@@ -1,11 +1,10 @@
-import axios from 'axios';
+import apiClient from '../lib/axios';
 
-import { API_ROUTES } from '../../../../packages/common/src/constants.ts';
-import type {TranslatorRequest} from 'src/routes/AllServiceRequests.tsx';
+import type { ServiceRequest } from '@/routes/AllServiceRequests.tsx';
 
-async function getTranslatorRequests (): Promise<TranslatorRequest> {
-    const translatorServices = (await axios.get('/api/servicereqs/translator')).data;
-    return translatorServices.data;
+async function getTranslatorRequests(): Promise<ServiceRequest[]> {
+    const res = await apiClient.get('/api/servicereqs/translator');
+    return Array.isArray(res.data) ? (res.data as ServiceRequest[]) : [];
 }
 
 export default getTranslatorRequests;

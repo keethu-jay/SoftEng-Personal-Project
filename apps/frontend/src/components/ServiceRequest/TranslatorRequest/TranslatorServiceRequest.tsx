@@ -4,7 +4,7 @@ import {Input} from "@/components/ui/input.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {useState} from "react";
 import {API_ROUTES} from "common/src/constants.ts";
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import ReturnTranslatorRequest from "@/components/ServiceRequest/TranslatorRequest/ReturnTranslatorRequest.tsx";
 import {ScrollArea} from "@/components/ui/scrollarea.tsx";
 import SubmissionReqPopup from "@/components/SubmissionReqPopup.tsx";
@@ -45,35 +45,48 @@ export default function TranslatorServiceRequest() {
 
     const onSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // console.log(form);
         setSubmitted(false);
 
-        axios
-            .post(API_ROUTES.SERVICEREQS + "/translator", form)
-            .then(() => {
+        // For demo: if IDs are left blank, use well-known demo IDs
+        const payload = {
+            ...form,
+            employeeRequestedById: form.employeeRequestedById || 1,
+            departmentUnderId: form.departmentUnderId || 1,
+            // sensible defaults if left blank
+            requestStatus: form.requestStatus || 'Unassigned',
+            priority: form.priority || 'LOW',
+        };
+
+        apiClient
+            .post(API_ROUTES.SERVICEREQS + "/translator", payload)
+            .then((response) => {
+                console.log('Translator request created successfully:', response.data);
+                alert('Translator request submitted successfully!');
                 setSubmitted(true);
                 setShowPopup(true);
             })
             .catch((err) => {
                 console.error("Error submitting translator request:", err);
+                console.error("Error response:", err.response?.data);
+                const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
+                alert(`Failed to submit request: ${errorMsg}`);
             });
     };
     return (
         <>
             {!submitted ?
-                <ScrollArea className="max-h-[95vh] overflow-y-auto pr-4 w-full max-w-screen-lg mx-auto bg-zinc-200">
-                <div className="flex flex-col gap-4">
-                    <div className="bg-blue-200 bg-opacity-60 rounded-3xl px-6 py-4 max-w-5xl w-full mx-auto">
+                <ScrollArea className="max-h-[95vh] overflow-y-auto pr-4 w-full max-w-screen-lg mx-auto bg-white">
+                <div className="flex flex-col gap-4 py-6">
+                    <div className="bg-[#0077b6]/90 text-white rounded-3xl px-6 py-4 max-w-5xl w-full mx-auto shadow-lg border-2 border-black mb-4">
                         <h2 className="text-4xl font-bold text-left">Request a Translator</h2>
                     </div>
                         <form onSubmit={onSubmit}>
                             <div>
-                                <Label className="pt-4 pb-2" htmlFor="employeeId">Employee ID</Label>
+                                <Label className="pt-4 pb-2" htmlFor="employeeId">Employee ID (optional)</Label>
                                 <Input
-                                    required
                                     type="number"
                                     id="employeeId"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -84,12 +97,11 @@ export default function TranslatorServiceRequest() {
                             </div>
 
                             <div>
-                                <Label className="pt-4 pb-2" htmlFor="employeeName">Employee Name</Label>
+                                <Label className="pt-4 pb-2" htmlFor="employeeName">Employee Name (optional)</Label>
                                 <Input
-                                    required
                                     type="text"
                                     id="employeeName"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -100,11 +112,10 @@ export default function TranslatorServiceRequest() {
                             </div>
 
                             <div>
-                                <Label className="pt-4 pb-2" htmlFor="department">Department</Label>
+                                <Label className="pt-4 pb-2" htmlFor="department">Department (optional)</Label>
                                 <select
-                                    required
                                     id="department"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -141,7 +152,7 @@ export default function TranslatorServiceRequest() {
                                     required
                                     type="text"
                                     id="roomNumber"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -157,7 +168,7 @@ export default function TranslatorServiceRequest() {
                                     required
                                     type="text"
                                     id="languageFrom"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -173,7 +184,7 @@ export default function TranslatorServiceRequest() {
                                     required
                                     type="text"
                                     id="languageTo"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -189,7 +200,7 @@ export default function TranslatorServiceRequest() {
                                     required
                                     type="datetime-local"
                                     id="startDateTime"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -205,7 +216,7 @@ export default function TranslatorServiceRequest() {
                                     required
                                     type="datetime-local"
                                     id="languageFrom"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -220,7 +231,7 @@ export default function TranslatorServiceRequest() {
                                 <select
                                     required
                                     id="priority"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -239,7 +250,7 @@ export default function TranslatorServiceRequest() {
                                 <select
                                     required
                                     id="requestStatus"
-                                    className = "w-80 h-8 rounded-2xl border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                    className = "w-80 h-10 rounded-full border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -257,7 +268,7 @@ export default function TranslatorServiceRequest() {
                             <Label className="pt-4 pb-2" htmlFor="comments">Comments</Label>
                             <textarea
                                 id="comments"
-                                className = "w-80 h-8 rounded-md border border-gray-500 px-4 transition-colors duration-300 focus:border-blue-500 focus:bg-blue-100"
+                                className = "w-80 min-h-20 rounded-xl border-2 border-[#0077b6] bg-white px-4 py-2 transition-all duration-300 focus:border-[#00b4d8] focus:ring-2 focus:ring-[#90e0ef]/50 focus:outline-none shadow-sm hover:shadow-md"
                                 onChange={(e) =>
                                     setForm({ ...form, comments: e.target.value })
                                 }

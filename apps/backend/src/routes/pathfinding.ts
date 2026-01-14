@@ -103,9 +103,11 @@ router.get('/pathfind/:graphId/:departmentId', async (req: Request, res: Respons
     const graphObj = new Graph();
 
     graphDB.Nodes.map((node) => {
-        graphObj.addNode(node.nodeId, node.tags, {
-            lat: node.lat,
-            lng: node.lng,
+        // Prisma types allow these fields to be null, but the Graph implementation
+        // expects concrete string/number values. Fall back to safe defaults when null.
+        graphObj.addNode(node.nodeId, node.tags ?? '', {
+            lat: node.lat ?? 0,
+            lng: node.lng ?? 0,
         });
     });
 
@@ -128,8 +130,8 @@ router.get('/pathfind/:graphId/:departmentId', async (req: Request, res: Respons
     // }
     res.json(
         graphObj.pathFind({
-            lat: department.lat,
-            lng: department.lng,
+            lat: department.lat ?? 0,
+            lng: department.lng ?? 0,
         })
     );
 });

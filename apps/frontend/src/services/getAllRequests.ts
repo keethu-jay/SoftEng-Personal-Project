@@ -1,11 +1,10 @@
-import axios from 'axios';
+import apiClient from '../lib/axios';
 
-import { API_ROUTES } from '../../../../packages/common/src/constants.ts';
-import type {ServiceRequest} from 'src/routes/AllServiceRequests.tsx';
+import type { ServiceRequest } from '@/routes/AllServiceRequests.tsx';
 
-async function getAllRequests (): Promise<ServiceRequest> {
-    const services = (await axios.get('/api/servicereqs'));
-    return services.data;
+async function getAllRequests(): Promise<ServiceRequest[]> {
+    const res = await apiClient.get('/api/servicereqs');
+    return Array.isArray(res.data) ? (res.data as ServiceRequest[]) : [];
 }
 
 export default getAllRequests;

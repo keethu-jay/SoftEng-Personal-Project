@@ -3,6 +3,51 @@ import PrismaClient from '../bin/prisma-client';
 import { Prisma } from 'database';
 const router: Router = express.Router();
 
+/**
+ * Ensure we always have a valid employee to attach to a service request.
+ * Tries the provided ID first; if it doesn't exist, falls back to the first
+ * employee in the database, or creates a demo employee as a last resort.
+ */
+async function resolveEmployeeId(rawEmployeeId: unknown, employeeName?: string): Promise<number> {
+    // Prefer a positive numeric ID if the client provided one
+    const requestedId =
+        typeof rawEmployeeId === 'number' && rawEmployeeId > 0 ? rawEmployeeId : undefined;
+
+    if (requestedId !== undefined) {
+        const existing = await PrismaClient.employee.findUnique({
+            where: { employeeId: requestedId },
+        });
+        if (existing) {
+            return existing.employeeId;
+        }
+    }
+
+    // Fall back to "any" existing employee (seeded demo users)
+    const first = await PrismaClient.employee.findFirst({
+        select: { employeeId: true },
+    });
+    if (first) {
+        return first.employeeId;
+    }
+
+    // As a last resort, create a demo employee
+    const safeName = (employeeName ?? 'Guest User').trim();
+    const [firstNameRaw, ...rest] = safeName.split(' ');
+    const firstName = firstNameRaw || 'Guest';
+    const lastName = rest.join(' ') || 'User';
+
+    const demo = await PrismaClient.employee.create({
+        data: {
+            email: `demo+service-${Date.now()}@example.com`,
+            password: 'demo',
+            firstName,
+            lastName,
+            occupation: 'Guest',
+        },
+    });
+    return demo.employeeId;
+}
+
 // GET ALL SERVICE REQUESTS
 router.get('/', async function (req: Request, res: Response) {
     // Query db, store response
@@ -40,16 +85,9 @@ router.get('/translator', async function (req: Request, res: Response) {
         },
     });
 
-    // If no service request with the ID is found, send 204 and log it
-    if (translatorRequests == null) {
-        console.error(`No translator requests found in database!`);
-        res.sendStatus(204);
-    }
-    // Otherwise send 200 and the data
-    else {
-        console.log(translatorRequests);
-        res.json(translatorRequests);
-    }
+    // Always return data, even if empty array (findMany never returns null)
+    console.log(`Found ${translatorRequests.length} translator requests`);
+    res.json(translatorRequests);
 });
 
 // GET ALL SECURITY REQUESTS
@@ -66,16 +104,9 @@ router.get('/security', async function (req: Request, res: Response) {
         },
     });
 
-    // If no service request with the ID is found, send 204 and log it
-    if (securityRequests == null) {
-        console.error(`No security requests found in database!`);
-        res.sendStatus(204);
-    }
-    // Otherwise send 200 and the data
-    else {
-        console.log(securityRequests);
-        res.json(securityRequests);
-    }
+    // Always return data, even if empty array
+    console.log(`Found ${securityRequests.length} security requests`);
+    res.json(securityRequests);
 });
 
 // GET ALL MEDICAL EQUIPMENT REQUESTS
@@ -118,16 +149,9 @@ router.get('/sanitation', async function (req: Request, res: Response) {
         },
     });
 
-    // If no service request with the ID is found, send 204 and log it
-    if (sanitationRequests == null) {
-        console.error(`No sanitation requests found in database!`);
-        res.sendStatus(204);
-    }
-    // Otherwise send 200 and the data
-    else {
-        console.log(sanitationRequests);
-        res.json(sanitationRequests);
-    }
+    // Always return data, even if empty array
+    console.log(`Found ${sanitationRequests.length} sanitation requests`);
+    res.json(sanitationRequests);
 });
 
 // POST TRANSLATOR REQUESTS TO DATABASE
@@ -141,8 +165,11 @@ router.post('/translator', async function (req: Request, res: Response) {
         priority,
         requestStatus,
         comments,
+        employeeName,
     } = req.body;
     try {
+        const resolvedEmployeeId = await resolveEmployeeId(employeeRequestedById, employeeName);
+
         await PrismaClient.serviceRequest.create({
             data: {
                 assignedEmployeeId: null,
@@ -150,7 +177,7 @@ router.post('/translator', async function (req: Request, res: Response) {
                 requestStatus,
                 priority,
                 departmentUnderId,
-                employeeRequestedById,
+                employeeRequestedById: resolvedEmployeeId,
                 comments,
                 translatorRequest: {
                     create: {
@@ -164,8 +191,11 @@ router.post('/translator', async function (req: Request, res: Response) {
         });
         console.log('Service request created');
     } catch (error) {
-        console.error(`Unable to create a new service request: ${error}`);
-        res.sendStatus(400);
+        console.error(`Unable to create a new translator service request: ${error}`);
+        res.status(400).json({
+            error: 'Unable to create translator service request',
+            details: String(error),
+        });
         return;
     }
 
@@ -183,12 +213,15 @@ router.post('/security', async function (req: Request, res: Response) {
         priority,
         requestStatus,
         comments,
+        employeeName,
     } = req.body;
     try {
+        const resolvedEmployeeId = await resolveEmployeeId(employeeRequestedById, employeeName);
+
         await PrismaClient.serviceRequest.create({
             data: {
                 assignedEmployeeId: null,
-                employeeRequestedById,
+                employeeRequestedById: resolvedEmployeeId,
                 departmentUnderId,
                 roomNum,
                 priority,
@@ -204,8 +237,11 @@ router.post('/security', async function (req: Request, res: Response) {
         });
         console.log('Service request created');
     } catch (error) {
-        console.error(`Unable to create a new service request: ${error}`);
-        res.sendStatus(400);
+        console.error(`Unable to create a new security service request: ${error}`);
+        res.status(400).json({
+            error: 'Unable to create security service request',
+            details: String(error),
+        });
         return;
     }
 
@@ -224,12 +260,15 @@ router.post('/equipment', async function (req: Request, res: Response) {
         departmentUnderId,
         priority,
         requestStatus,
+        employeeName,
     } = req.body;
     try {
+        const resolvedEmployeeId = await resolveEmployeeId(employeeRequestedById, employeeName);
+
         await PrismaClient.serviceRequest.create({
             data: {
                 assignedEmployeeId: null,
-                employeeRequestedById,
+                employeeRequestedById: resolvedEmployeeId,
                 departmentUnderId,
                 roomNum,
                 priority,
@@ -248,8 +287,11 @@ router.post('/equipment', async function (req: Request, res: Response) {
         });
         console.log('Service request created');
     } catch (error) {
-        console.error(`Unable to create a new service request: ${error}`);
-        res.sendStatus(400);
+        console.error(`Unable to create a new equipment service request: ${error}`);
+        res.status(400).json({
+            error: 'Unable to create equipment service request',
+            details: String(error),
+        });
         return;
     }
     res.sendStatus(200);
@@ -266,13 +308,16 @@ router.post('/sanitation', async (req, res) => {
         departmentUnderId,
         priority,
         requestStatus,
+        employeeName,
     } = req.body;
 
     try {
+        const resolvedEmployeeId = await resolveEmployeeId(employeeRequestedById, employeeName);
+
         await PrismaClient.serviceRequest.create({
             data: {
                 assignedEmployeeId: null,
-                employeeRequestedById,
+                employeeRequestedById: resolvedEmployeeId,
                 departmentUnderId,
                 roomNum,
                 priority,
@@ -290,7 +335,11 @@ router.post('/sanitation', async (req, res) => {
         console.log('Service request created');
     } catch (error) {
         console.error('Error creating sanitation request:', error);
-        res.status(500).json({ error: 'Error creating sanitation request' });
+        res.status(500).json({
+            error: 'Error creating sanitation request',
+            details: String(error),
+        });
+        return;
     }
     res.sendStatus(200);
 });

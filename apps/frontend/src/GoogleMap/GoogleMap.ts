@@ -1,5 +1,5 @@
 import {GoogleMapProps} from "@/GoogleMap/GoogleMap.tsx"
-import axios from "axios";
+import apiClient from "@/lib/axios";
 import {API_ROUTES, Coordinates} from "common/src/constants.ts";
 
 const DEFAULT_CENTER: google.maps.LatLngLiteral = {
@@ -64,9 +64,20 @@ export default class GoogleMap {
         if (!this.editor && props.autoCompleteRef.current) {
 
             this.directionsService = new google.maps.DirectionsService();
-            this.directionsRenderer = new google.maps.DirectionsRenderer({
-                map: this.map
-            });
+
+            // If the directions panel exists in the DOM, attach it so Google
+            // renders step-by-step instructions there.
+            const directionsPanel = document.getElementById('directions-panel');
+            if (directionsPanel) {
+                this.directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: this.map,
+                    panel: directionsPanel,
+                });
+            } else {
+                this.directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: this.map,
+                });
+            }
 
             this.autocomplete = new google.maps.places.Autocomplete(props.autoCompleteRef.current, {
                 fields: ['place_id'],
@@ -83,8 +94,7 @@ export default class GoogleMap {
                     this.route();
                 }
             });
-        }
-        else {
+        } else {
             this.directionsService = null;
             this.directionsRenderer = null;
             this.autocomplete = null;
@@ -208,7 +218,7 @@ export default class GoogleMap {
 
             console.log('Get route ' + route);
 
-            axios.get(route).then((response) => {
+            apiClient.get(route).then((response) => {
 
                 console.log('Got route');
             //     const points: Coordinates[] = response.data[0];

@@ -4018,6 +4018,14 @@ const RAW_RUNTIME_STATE =
           ["@types/node", "npm:22.13.13"]\
         ],\
         "linkType": "HARD"\
+      }],\
+      ["npm:2.8.19", {\
+        "packageLocation": "./.yarn/cache/@types-cors-npm-2.8.19-a67092452c-b5dd407040.zip/node_modules/@types/cors/",\
+        "packageDependencies": [\
+          ["@types/cors", "npm:2.8.19"],\
+          ["@types/node", "npm:22.13.13"]\
+        ],\
+        "linkType": "HARD"\
       }]\
     ]],\
     ["@types/emscripten", [\
@@ -5214,6 +5222,7 @@ const RAW_RUNTIME_STATE =
           ["@swc/core", "virtual:9a28949798a912c67218bf8cea1001b3cae21be82aaad0589210650a91ed87ad2b921ce3379d36f5723672b5e5a668da59a3e262568425b08570aa654e7b0112#npm:1.11.13"],\
           ["@swc/helpers", "npm:0.5.15"],\
           ["@types/cookie-parser", "virtual:9a28949798a912c67218bf8cea1001b3cae21be82aaad0589210650a91ed87ad2b921ce3379d36f5723672b5e5a668da59a3e262568425b08570aa654e7b0112#npm:1.4.8"],\
+          ["@types/cors", "npm:2.8.19"],\
           ["@types/express", "npm:5.0.1"],\
           ["@types/http-errors", "npm:2.0.4"],\
           ["@types/morgan", "npm:1.9.9"],\
@@ -5222,6 +5231,7 @@ const RAW_RUNTIME_STATE =
           ["@types/supertest", "npm:6.0.3"],\
           ["common", "workspace:packages/common"],\
           ["cookie-parser", "npm:1.4.7"],\
+          ["cors", "npm:2.8.5"],\
           ["database", "workspace:packages/database"],\
           ["dotenv", "npm:16.4.7"],\
           ["dotenv-cli", "npm:7.4.4"],\

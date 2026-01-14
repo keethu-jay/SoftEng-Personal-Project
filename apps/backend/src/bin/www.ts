@@ -17,11 +17,13 @@ try {
 }
 
 // Get port from environment and store in Express
-const port: string | undefined = process.env.BACKEND_PORT;
+// Support both BACKEND_PORT (this monorepo) and PORT (common hosting default).
+// Fall back to 3001 for local development if neither is set.
+const port: string = process.env.BACKEND_PORT ?? process.env.PORT ?? '3001';
 
-if (port === undefined) {
-    console.error('Failed to start: Missing PORT environment variable');
-    process.exit(1);
+// Warn if neither env var was provided (but still start with fallback).
+if (process.env.BACKEND_PORT === undefined && process.env.PORT === undefined) {
+    console.warn('BACKEND_PORT/PORT not set; defaulting backend port to 3001');
 }
 
 app.set('port', port);
