@@ -117,17 +117,6 @@ router.get('/pathfind/:graphId/:departmentId', async (req: Request, res: Respons
         });
     });
 
-    // console.log(graphDB);
-    // const graphObj = new Graph();
-    // for (const node in graphDB.Nodes) {
-    //     graphObj.addNode(node.nodeId, node.tags, {
-    //         x: node.lat,
-    //         y: node.lng,
-    //     });
-    // }
-    // for (const node in graphDB.Nodes) {
-    //     graphObj.addEdge()
-    // }
     res.json(
         graphObj.pathFind({
             lat: department.lat ?? 0,
@@ -184,6 +173,28 @@ router.post('/newEdge', async (req: Request, res: Response) => {
         return;
     }
     res.sendStatus(200);
+});
+
+router.patch('/nodes/:nodeId', async (req: Request, res: Response) => {
+    const nodeId = Number(req.params.nodeId);
+    const { lat, lng } = req.body as { lat?: number; lng?: number };
+
+    if (!nodeId || typeof lat !== 'number' || typeof lng !== 'number') {
+        res.status(400).json({ error: 'nodeId, lat and lng are required and must be numbers.' });
+        return;
+    }
+
+    try {
+        await PrismaClient.node.update({
+            where: { nodeId },
+            data: { lat, lng },
+        });
+        console.log(`Node ${nodeId} updated to lat=${lat}, lng=${lng}`);
+        res.sendStatus(200);
+    } catch (error) {
+        console.error(`Unable to update node ${nodeId}:`, error);
+        res.sendStatus(400);
+    }
 });
 
 export default router;

@@ -3,6 +3,8 @@ import express, { Express, NextFunction, Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import cors from 'cors';
+
+// Route imports
 import healthcheckRouter from './routes/healthcheck';
 import employeeRouter from './routes/employee.ts';
 import assignedRouter from './routes/assigned.ts';
@@ -12,28 +14,50 @@ import pathfindRouter from './routes/pathfind.ts';
 import pathfindingRouter from './routes/pathfinding.ts';
 import forumRouter from './routes/forum.ts';
 
-// const { auth, requiresAuth } = require('express-openid-connect');
-
 import { API_ROUTES } from 'common/src/constants';
 
-const app: Express = express(); // Setup the backend
-// Setup generic middlewear
-app.use(cors()); // Enable CORS for all routes
+/**
+ * Express application setup and configuration.
+ *
+ * This file configures the Express server with:
+ * - CORS middleware for cross-origin requests
+ * - Request logging with Morgan
+ * - JSON and URL-encoded body parsing
+ * - Cookie parsing
+ * - API route registration
+ * - Error handling middleware
+ */
+const app: Express = express();
+
+// Enable CORS for all routes (allows frontend to make requests from different origin)
+app.use(cors());
+
+// HTTP request logging middleware
+// Logs all incoming requests in development format
 app.use(
     logger('dev', {
         stream: {
-            // This is a "hack" that gets the output to appear in the remote debugger :)
+            // Output logs to console for remote debugging
             write: (msg) => console.info(msg),
         },
     })
-); // This records all HTTP requests
+);
 
-app.use(express.json()); // This processes requests as JSON
-app.use(express.urlencoded({ extended: false })); // URL parser
-app.use(cookieParser()); // Cookie parser
+// Parse incoming request bodies as JSON
+app.use(express.json());
 
-// Setup routers. ALL ROUTERS MUST use /api as a start point, or they
-// won't be reached by the default proxy and prod setup
+// Parse URL-encoded request bodies
+app.use(express.urlencoded({ extended: false }));
+
+// Parse cookies from request headers
+app.use(cookieParser());
+
+/**
+ * Register API route handlers.
+ *
+ * IMPORTANT: All routers must use /api as a prefix (defined in API_ROUTES)
+ * to work with the default proxy and production setup.
+ */
 app.use(API_ROUTES.HEALTHCHECK, healthcheckRouter);
 app.use(API_ROUTES.EMPLOYEE, employeeRouter);
 app.use(API_ROUTES.SERVICEREQS, servicereqsRouter);
@@ -44,48 +68,34 @@ app.use(API_ROUTES.PATHFINDING, pathfindingRouter);
 app.use(API_ROUTES.FORUM, forumRouter);
 
 /**
- * Auth0
- */
-// const config = {
-//     authRequired: false,
-//     auth0Logout: true,
-//     secret: 'yada',
-//     baseURL: 'http://localhost:3000',
-//     clientID: 'oTdQpRiO6NMqpsVbTLhp6Kk5egdnFmEs',
-//     issuerBaseURL: 'https://dev-b5d68fi8od5s513y.us.auth0.com',
-// };
-//
-// // auth router attaches /login, /logout, and /callback routes to the baseURL
-// app.use(auth(config));
-
-// req.isAuthenticated is provided from the auth router
-// app.get('/', (req, res) => {
-//     res.send(req.oidc.sisAuthenticated() ? 'Logged in' : 'Logged out');
-// });
-
-/**
- * Catch all 404 errors, and forward them to the error handler
+ * 404 Error Handler
+ *
+ * Catches all requests that don't match any registered routes
+ * and forwards them to the generic error handler.
  */
 app.use((req: Request, res: Response, next: NextFunction) => {
-    // Have the next (generic error handler) process a 404 error
     next(createError(404));
 });
 
 /**
- * Generic error handler
+ * Generic Error Handler
+ *
+ * Handles all errors thrown by route handlers or middleware.
+ * Returns appropriate HTTP status codes and error messages.
+ *
+ * @param {HttpError} err - The error object
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
  */
 app.use((err: HttpError, req: Request, res: Response) => {
-    // Provide the error message
     res.statusMessage = err.message;
-
     res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-    // Reply with the error (ensure we actually end the response)
+    // Send error response with status code and message
     res.status(err.status || 500).json({
         error: err.message,
         status: err.status || 500,
     });
 });
 
-// Export the backend, so that www.ts can start it
 export default app;

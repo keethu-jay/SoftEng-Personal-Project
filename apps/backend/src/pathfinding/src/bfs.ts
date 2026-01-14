@@ -200,16 +200,217 @@ class Graph {
         // console.log(entranceNode);
 
         const parkingCanidates: GraphNode[] = this.nodesList.filter((node) => {
-            return node.tags.indexOf('[Parking') >= 0;
+            return node.tags && node.tags.indexOf('[Parking') >= 0;
         });
 
-        if (parkingCanidates.length === 0) return [[]];
+        // Always calculate indoor path (from entrance to department)
+        const indoorPath = this.bfs(doorNode, checkpointNode);
+
+        // Calculate parking path only if parking exists
+        if (parkingCanidates.length === 0) {
+            // Return indoor path only, with empty parking path
+            return [indoorPath, []];
+        }
 
         const parkingNode = parkingCanidates[0];
+        const parkingPath = this.bfs(parkingNode, entranceNode);
 
-        // console.log(parkingNode);
+        // Return both paths: [indoorPath, parkingPath]
+        // indoorPath: entrance → department (inside building)
+        // parkingPath: parking → entrance (may be empty if no parking)
+        return [indoorPath, parkingPath];
+    }
 
-        return [this.bfs(doorNode, checkpointNode), this.bfs(parkingNode, entranceNode)];
+    // Generate step-by-step directions from paths
+    pathFindWithDirections(
+        departmentCoords: Coordinates,
+        edgeMap: Map<string, { name: string | null; weight: number | null }>,
+        allNodes: any[]
+    ): { paths: Coordinates[][]; directions: any[] } {
+        // Get the raw paths first using existing pathFind logic
+        const checkpointCanidates: GraphNode[] = this.nodesList.filter((node) => {
+            return node.tags && node.tags.indexOf('[Checkpoint') >= 0;
+        });
+        if (checkpointCanidates.length === 0) {
+            console.log('No checkpoint nodes found');
+            return { paths: [[]], directions: [] };
+        }
+
+        const checkpointNode = checkpointCanidates.reduce((closest, node) => {
+            if (
+                euclideanDistance(node.coords, departmentCoords) <
+                euclideanDistance(closest.coords, departmentCoords)
+            ) {
+                return node;
+            } else {
+                return closest;
+            }
+        });
+
+        const doorCanidates: GraphNode[] = this.nodesList.filter((node) => {
+            return node.tags && node.tags.indexOf('[Door') >= 0;
+        });
+        if (doorCanidates.length === 0) {
+            console.log('No door nodes found');
+            return { paths: [[]], directions: [] };
+        }
+
+        const doorNode = doorCanidates.reduce((closest, node) => {
+            if (
+                euclideanDistance(node.coords, departmentCoords) <
+                euclideanDistance(closest.coords, departmentCoords)
+            ) {
+                return node;
+            } else {
+                return closest;
+            }
+        });
+
+        // Find entrance node - try to match with door node's entrance tag
+        // The door tag format is typically like "[Door1]" and entrance is "[Entrance1]"
+        let entranceNode: GraphNode | undefined;
+        if (doorNode.tags && doorNode.tags.length >= 2) {
+            const entranceTagChar = doorNode.tags.charAt(doorNode.tags.length - 2);
+            entranceNode = this.nodesList.find((node) => {
+                return node.tags && node.tags.indexOf('[Entrance' + entranceTagChar) >= 0;
+            });
+        }
+        // Fallback: find any entrance node if the above doesn't work
+        if (!entranceNode) {
+            entranceNode = this.nodesList.find((node) => {
+                return node.tags && node.tags.indexOf('[Entrance') >= 0;
+            });
+        }
+        if (!entranceNode) {
+            console.log('No entrance node found');
+            return { paths: [[]], directions: [] };
+        }
+
+        const parkingCanidates: GraphNode[] = this.nodesList.filter((node) => {
+            return node.tags && node.tags.indexOf('[Parking') >= 0;
+        });
+
+        const indoorPath = this.bfs(doorNode, checkpointNode);
+        const parkingPath =
+            parkingCanidates.length > 0 ? this.bfs(parkingCanidates[0], entranceNode) : [];
+
+        const paths = [indoorPath, parkingPath];
+        const directions: any[] = [];
+        let stepIdx = 0;
+
+        // Process parking path (if exists) - parking to entrance
+        if (parkingPath.length > 0 && parkingCanidates.length > 0 && entranceNode) {
+            const parkingNode = parkingCanidates[0];
+            const parkingNodePath = this.bfsNodePath(parkingNode, entranceNode);
+
+            if (parkingNodePath && parkingNodePath.length > 1) {
+                for (let i = 0; i < parkingNodePath.length - 1; i++) {
+                    const from = parkingNodePath[i];
+                    const to = parkingNodePath[i + 1];
+                    const edgeKey = `${from.id}-${to.id}`;
+                    const edgeInfo = edgeMap.get(edgeKey);
+
+                    // Determine icon based on node tags and edge name
+                    let icon = 'straight';
+                    let instruction = 'Continue forward';
+
+                    if (
+                        to.tags &&
+                        (to.tags.indexOf('[Elevator') >= 0 || to.tags.indexOf('Elevator') >= 0)
+                    ) {
+                        icon = 'up';
+                        instruction = 'Take the elevator';
+                    } else if (
+                        to.tags &&
+                        (to.tags.indexOf('[Stairs') >= 0 || to.tags.indexOf('Stairs') >= 0)
+                    ) {
+                        icon = 'up';
+                        instruction = 'Take the stairs';
+                    } else if (edgeInfo?.name) {
+                        const edgeName = edgeInfo.name.toLowerCase();
+                        if (edgeName.includes('left')) {
+                            icon = 'left';
+                            instruction = 'Turn left';
+                        } else if (edgeName.includes('right')) {
+                            icon = 'right';
+                            instruction = 'Turn right';
+                        }
+                    }
+
+                    const distance = euclideanDistance(from.coords, to.coords);
+                    // Only add step if distance is valid
+                    if (!isNaN(distance) && isFinite(distance)) {
+                        directions.push({
+                            idx: stepIdx++,
+                            instructions: instruction,
+                            icon: icon,
+                            time: Math.round(distance * 0.5), // Rough estimate: 0.5 min per unit distance
+                            distanceImp: `${(distance * 0.000621371).toFixed(2)} mi`,
+                            distanceMet: `${(distance * 0.001).toFixed(2)} km`,
+                        });
+                    }
+                }
+            }
+        }
+
+        // Process indoor path (entrance to department) - doorNode and checkpointNode already found above
+        if (indoorPath.length > 0 && doorNode && checkpointNode) {
+            const indoorNodePath = this.bfsNodePath(doorNode, checkpointNode);
+
+            if (indoorNodePath && indoorNodePath.length > 1) {
+                for (let i = 0; i < indoorNodePath.length - 1; i++) {
+                    const from = indoorNodePath[i];
+                    const to = indoorNodePath[i + 1];
+                    const edgeKey = `${from.id}-${to.id}`;
+                    const edgeInfo = edgeMap.get(edgeKey);
+
+                    // Determine icon and instruction
+                    let icon = 'straight';
+                    let instruction = 'Continue forward';
+
+                    if (
+                        to.tags &&
+                        (to.tags.indexOf('[Elevator') >= 0 || to.tags.indexOf('Elevator') >= 0)
+                    ) {
+                        icon = 'up';
+                        instruction = 'Take the elevator';
+                    } else if (
+                        to.tags &&
+                        (to.tags.indexOf('[Stairs') >= 0 || to.tags.indexOf('Stairs') >= 0)
+                    ) {
+                        icon = 'up';
+                        instruction = 'Take the stairs';
+                    } else if (edgeInfo?.name) {
+                        const edgeName = edgeInfo.name.toLowerCase();
+                        if (edgeName.includes('left')) {
+                            icon = 'left';
+                            instruction = 'Turn left';
+                        } else if (edgeName.includes('right')) {
+                            icon = 'right';
+                            instruction = 'Turn right';
+                        }
+                    }
+
+                    const distance = euclideanDistance(from.coords, to.coords);
+                    // Only add step if distance is valid
+                    if (!isNaN(distance) && isFinite(distance)) {
+                        directions.push({
+                            idx: stepIdx++,
+                            instructions: instruction,
+                            icon: icon,
+                            time: Math.round(distance * 0.5),
+                            distanceImp: `${(distance * 0.000621371).toFixed(2)} mi`,
+                            distanceMet: `${(distance * 0.001).toFixed(2)} km`,
+                        });
+                    }
+                }
+            }
+        }
+
+        return {
+            paths: paths,
+            directions: directions,
+        };
 
         // const entranceCanidates: GraphNode[] = this.nodesList.filter((node) => {
         //     return node.tags.indexOf('[Entrance') >= 0;
@@ -242,6 +443,26 @@ class Graph {
             for (const neighbor of node.getNeighbors()) {
                 if (!visited.has(neighbor.id)) {
                     queue.push({ node: neighbor, path: [...path, neighbor.coords] });
+                }
+            }
+        }
+        return [];
+    }
+
+    // BFS that returns node path (for direction generation)
+    bfsNodePath(start: GraphNode, end: GraphNode): GraphNode[] {
+        const visited = new Set<number>();
+        const queue: { node: GraphNode; path: GraphNode[] }[] = [{ node: start, path: [start] }];
+
+        while (queue.length > 0) {
+            const { node, path } = queue.shift()!;
+            if (node.id === end.id) {
+                return path;
+            }
+            visited.add(node.id);
+            for (const neighbor of node.getNeighbors()) {
+                if (!visited.has(neighbor.id)) {
+                    queue.push({ node: neighbor, path: [...path, neighbor] });
                 }
             }
         }
