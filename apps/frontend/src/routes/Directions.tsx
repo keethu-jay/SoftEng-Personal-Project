@@ -134,7 +134,13 @@ export default function Directions(props: DirectionsProps) {
                     setError(`Server error: ${error.response.status} ${error.response.statusText}`);
                 } else if (error.request) {
                     console.error('No response received. Request:', error.request);
-                    setError('Unable to connect to server. Is the backend running on port 3001?');
+                    const apiBase = apiClient.defaults.baseURL || '';
+                    const isProd = apiBase.startsWith('http') && !apiBase.includes('localhost');
+                    setError(
+                        isProd
+                            ? 'Unable to connect to server. Check that the backend is deployed and VITE_API_URL is set in Vercel.'
+                            : 'Unable to connect to server. Is the backend running on port 3001?'
+                    );
                 } else {
                     console.error('Request setup error:', error.message);
                     setError(`Error: ${error.message}`);

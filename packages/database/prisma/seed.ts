@@ -442,8 +442,8 @@ async function main() {
     console.log(graphs);
 
     console.log('Seeding departments...');
-
-    const departments = [
+    try {
+        const departments = [
         await prisma.department.upsert({
             where: {departmentId: 0},
             update: {
@@ -1445,6 +1445,9 @@ async function main() {
 
     console.log('Departments seeded!');
     console.log(departments);
+    } catch (error) {
+        console.warn('Department seeding encountered errors, but continuing with other data...', error);
+    }
 
     console.log('Seeding nodes...');
 
@@ -4900,9 +4903,6 @@ async function main() {
     //         },
     //     })
     // ];
-    // console.log('Departments seeded!');
-    // console.log(departments);
-
     // Seed service requests
     console.log('Seeding service requests...');
     const serviceRequests = [
@@ -5306,6 +5306,70 @@ async function main() {
     ];
     console.log('Sanitation requests seeded!')
     console.log(sanitationRequests);
+
+    // Seed forum posts
+    console.log('Seeding forum posts...');
+    const forumPosts = [
+        await prisma.post.upsert({
+            where: { postId: 1 },
+            update: {},
+            create: {
+                title: 'Welcome to the Hospital Forum!',
+                content: 'This is a community forum for hospital staff to share information, ask questions, and connect with colleagues. Feel free to post questions or share helpful tips!',
+                email: 'nrlee@gmail.com',
+                posterId: 4, // Nicole Lee (Administrator)
+            },
+        }),
+        await prisma.post.upsert({
+            where: { postId: 2 },
+            update: {},
+            create: {
+                title: 'Best Practices for Patient Care',
+                content: 'I wanted to share some best practices I\'ve learned over the years. Always ensure patient privacy, document everything clearly, and communicate effectively with the care team.',
+                email: 'mkhaven@gmail.com',
+                posterId: 2, // Matthew Haven (Doctor)
+            },
+        }),
+        await prisma.post.upsert({
+            where: { postId: 3 },
+            update: {},
+            create: {
+                title: 'New Equipment Training Session',
+                content: 'There will be a training session next week for the new medical equipment. All staff are welcome to attend. Please RSVP if you plan to come.',
+                email: 'palong@gmail.com',
+                posterId: 3, // Piper Long (Nurse)
+            },
+        }),
+    ];
+    console.log('Forum posts seeded!');
+    console.log(forumPosts);
+
+    // Seed forum replies
+    console.log('Seeding forum replies...');
+    const forumReplies = [
+        await prisma.reply.upsert({
+            where: { replyId: 1 },
+            update: {},
+            create: {
+                content: 'Great initiative! Looking forward to participating in discussions.',
+                email: 'mkhaven@gmail.com',
+                postId: 1,
+                replierId: 2, // Matthew Haven
+            },
+        }),
+        await prisma.reply.upsert({
+            where: { replyId: 2 },
+            update: {},
+            create: {
+                content: 'Thanks for sharing these tips! Very helpful for new staff members.',
+                email: 'palong@gmail.com',
+                postId: 2,
+                replierId: 3, // Piper Long
+            },
+        }),
+    ];
+    console.log('Forum replies seeded!');
+    console.log(forumReplies);
 }
 
 

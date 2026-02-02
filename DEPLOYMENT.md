@@ -65,24 +65,29 @@ Before deploying the backend, push your Prisma schema to the Render database:
    - **Root Directory:** Leave empty
    - **Build Command:**
      ```bash
-     npm install -g yarn@4.7.0 && yarn install && yarn workspace database generate && yarn build
+     corepack enable && corepack prepare yarn@4.7.0 --activate && export PRISMA_SKIP_POSTINSTALL_GENERATE=true && yarn install --immutable && yarn workspace database generate && yarn build
      ```
+   
+   **Note:** `PRISMA_SKIP_POSTINSTALL_GENERATE=true` must be set so Prisma does **not** run `generate` during `yarn install` (it fails under Yarn PnP and can leave "unplugged package missing"). We run `yarn workspace database generate` explicitly after install. Also set `PRISMA_SKIP_POSTINSTALL_GENERATE=true` in Render **Environment Variables** (see below) so it applies to the whole build.
    - **Start Command:**
      ```bash
-     npm install -g yarn@4.7.0 && yarn install --immutable && BACKEND_PORT=$PORT yarn workspace backend docker:run
+     BACKEND_PORT=$PORT NODE_OPTIONS="--max-old-space-size=480" yarn workspace backend docker:run
      ```
+   - **Important:** Do **not** run `yarn install` again in the start command—the build step already installed dependencies. Re-running install uses a lot of memory and can cause "Ran out of memory (512MB)" on Render's free tier.
    - **Plan:** Free (spins down after 15 min inactivity)
    
-   **Note:** The `.nvmrc` file and `engines` field in `package.json` specify Node.js 20, which Render should automatically detect. If it still uses Node 22, the build command will install yarn via npm instead of using corepack.
+   **Note:** The `.nvmrc` file and `engines` field in `package.json` specify Node.js 20, which Render automatically detects. Corepack should work properly with Node 20.
 
 4. **Environment Variables** - Add these:
    ```
    NODE_ENV=production
    POSTGRES_URL=<Internal Database URL from Step 1>
    BACKEND_SOURCE=production
+   PRISMA_SKIP_POSTINSTALL_GENERATE=true
    ```
    **Important:** 
    - Use the **Internal Database URL** (not External) for `POSTGRES_URL`
+   - **PRISMA_SKIP_POSTINSTALL_GENERATE=true** is required so Prisma does not run `generate` during `yarn install` (avoids PnP/postinstall failures and "Required unplugged package missing").
    - **Note:** Google Maps API key is NOT needed here - it's only used in the frontend (Vercel)
 
 5. Click **"Create Web Service"**
@@ -115,10 +120,15 @@ Before deploying the backend, push your Prisma schema to the Render database:
    VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key
    ```
    **Replace:**
-   - `your-backend-name.onrender.com` with your actual Render backend URL
+   - `your-backend-name.onrender.com` with your actual Render backend URL (e.g., `https://hospital-back-195y.onrender.com`)
    - `your-auth0-domain` with your Auth0 domain
    - `your-auth0-client-id` with your Auth0 client ID
    - `your-google-maps-api-key` with your Google Maps API key
+   
+   **CRITICAL:** 
+   - `VITE_API_URL` must include `https://` prefix
+   - No trailing slash at the end
+   - After setting environment variables, you MUST redeploy the frontend for changes to take effect
 
 6. Click **"Deploy"**
 7. Wait ~2-3 minutes for deployment
@@ -198,10 +208,73 @@ Before deploying the backend, push your Prisma schema to the Render database:
 - **Use External URL** for local connections
 - **Check database is not paused** in Render dashboard
 
+### Build failed: "Required unplugged package missing" / Prisma postinstall failed (Render)
+This usually means Prisma ran `generate` during `yarn install` (and failed under Yarn PnP), leaving the install in a bad state.
+
+1. **Set `PRISMA_SKIP_POSTINSTALL_GENERATE=true` in Render**
+   - Render → your Web Service → **Environment** → add:
+   - **Key:** `PRISMA_SKIP_POSTINSTALL_GENERATE`  
+   - **Value:** `true`
+   - Save and redeploy.
+
+2. **Use the updated Build Command** (it exports that variable and uses `yarn install --immutable`):
+   ```bash
+   corepack enable && corepack prepare yarn@4.7.0 --activate && export PRISMA_SKIP_POSTINSTALL_GENERATE=true && yarn install --immutable && yarn workspace database generate && yarn build
+   ```
+
+3. **Pin Prisma to one version** – The repo now pins `prisma` and `@prisma/client` to `6.5.0` (with `resolutions` in root `package.json`). After pulling, run **`yarn install`** locally so the lockfile updates, then commit and push so Render uses a single Prisma version.
+
+### "Ran out of memory (used over 512MB)" on Render backend
+Render's free tier has a **512MB** memory limit. The deploy can exceed this if the **start command** runs a full `yarn install` again.
+
+1. **Use the lighter start command** (no second install, cap Node heap):
+   ```bash
+   BACKEND_PORT=$PORT NODE_OPTIONS="--max-old-space-size=480" yarn workspace backend docker:run
+   ```
+   In Render: **Dashboard** → your Web Service → **Settings** → **Build & Deploy** → **Start Command** → paste the above and save.
+
+2. **Do not** include `yarn install` or `corepack ... && yarn install` in the start command. The **build** step already installs dependencies; re-running install at start doubles memory use and often triggers the 512MB limit.
+
+3. **Redeploy** after changing the start command (Manual Deploy or push a commit).
+
+4. If it still runs out of memory, consider Render's **Starter** plan (e.g. $7/month) for more memory, or trim dependencies (e.g. remove unused workspaces from the deploy).
+
+### "Unable to connect to server" / No data on any page (Vercel)
+This usually means the frontend is calling **localhost** instead of your deployed backend.
+
+1. **Set `VITE_API_URL` in Vercel** (required for production):
+   - Vercel → Your project → **Settings** → **Environment Variables**
+   - Add: **Name** `VITE_API_URL`, **Value** `https://YOUR-RENDER-BACKEND-URL.onrender.com`
+   - Use your actual Render backend URL (e.g. `https://hospital-nav-backend.onrender.com`)
+   - No trailing slash; must include `https://`
+2. **Redeploy the frontend** after adding/changing env vars:
+   - Vercel → **Deployments** → ⋮ on latest → **Redeploy**
+3. **Confirm the backend is up**: open `https://YOUR-BACKEND.onrender.com/api/healthcheck` in a browser (free tier may take ~30s to wake).
+
 ### CORS Errors
-- Backend has CORS enabled in code
-- Verify `VITE_API_URL` matches your backend URL exactly
+- Backend has CORS enabled in code (updated to allow Vercel domains)
+- Verify `VITE_API_URL` matches your backend URL exactly (must include `https://`)
 - Check browser console for specific error messages
+- **Common issue:** If data doesn't load, check that `VITE_API_URL` is set in Vercel environment variables
+
+### Data Not Loading / API Calls Failing
+1. **Verify `VITE_API_URL` is set in Vercel:**
+   - Go to Vercel project → Settings → Environment Variables
+   - Ensure `VITE_API_URL` is set to your Render backend URL (e.g., `https://hospital-back-195y.onrender.com`)
+   - **Important:** Must include `https://` prefix, no trailing slash
+   
+2. **Check browser console:**
+   - Open browser DevTools (F12) → Console tab
+   - Look for errors like "Failed to fetch" or CORS errors
+   - Check Network tab to see if API calls are being made and what URLs they're using
+   
+3. **Verify backend is running:**
+   - Visit your Render backend URL directly: `https://your-backend.onrender.com/api/healthcheck`
+   - Should return a response (backend might be sleeping on free tier - first request takes ~30 seconds)
+   
+4. **Redeploy frontend after setting environment variables:**
+   - After adding/updating `VITE_API_URL` in Vercel, you must redeploy
+   - Go to Vercel dashboard → Deployments → Click "..." → "Redeploy"
 
 ### Backend Sleeps (Free Tier)
 - First request after 15 min inactivity takes ~30 seconds
