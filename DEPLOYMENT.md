@@ -71,9 +71,9 @@ Before deploying the backend, push your Prisma schema to the Render database:
    **Note:** `PRISMA_SKIP_POSTINSTALL_GENERATE=true` must be set so Prisma does **not** run `generate` during `yarn install` (it fails under Yarn PnP and can leave "unplugged package missing"). We run `yarn workspace database generate` explicitly after install. Also set `PRISMA_SKIP_POSTINSTALL_GENERATE=true` in Render **Environment Variables** (see below) so it applies to the whole build.
    - **Start Command:**
      ```bash
-     BACKEND_PORT=$PORT NODE_OPTIONS="--max-old-space-size=480" yarn workspace backend docker:run
+     BACKEND_PORT=$PORT NODE_OPTIONS="--max-old-space-size=480" yarn node apps/backend/dist/bin/www.js
      ```
-   - **Important:** Do **not** run `yarn install` again in the start command—the build step already installed dependencies. Re-running install uses a lot of memory and can cause "Ran out of memory (512MB)" on Render's free tier.
+   - **Important:** Run the **compiled** backend (Node runs `dist/bin/www.js`), not `ts-node`. This avoids "Required package missing from disk" for ts-node under Yarn PnP at runtime. The build step compiles the backend with `yarn build`.
    - **Plan:** Free (spins down after 15 min inactivity)
    
    **Note:** The `.nvmrc` file and `engines` field in `package.json` specify Node.js 20, which Render automatically detects. Corepack should work properly with Node 20.
@@ -223,6 +223,15 @@ This usually means Prisma ran `generate` during `yarn install` (and failed under
    ```
 
 3. **Pin Prisma to one version** – The repo now pins `prisma` and `@prisma/client` to `6.5.0` (with `resolutions` in root `package.json`). After pulling, run **`yarn install`** locally so the lockfile updates, then commit and push so Render uses a single Prisma version.
+
+### "Required package missing from disk" / ts-node missing at start (Render)
+The **start** command must run the **compiled** backend (Node running JS), not `ts-node` (TypeScript at runtime). Under Yarn PnP on Render, ts-node is not available at runtime, so you get "Missing package: ts-node@virtual:...".
+
+**Fix:** Use this start command (runs compiled `dist/bin/www.js` from repo root so PnP resolves `database` and `common`):
+```bash
+BACKEND_PORT=$PORT NODE_OPTIONS="--max-old-space-size=480" yarn node apps/backend/dist/bin/www.js
+```
+The build step (`yarn build`) compiles the backend to `apps/backend/dist/`. Do **not** use `yarn workspace backend docker:run` or `ts-node` in production on Render.
 
 ### "Ran out of memory (used over 512MB)" on Render backend
 Render's free tier has a **512MB** memory limit. The deploy can exceed this if the **start command** runs a full `yarn install` again.

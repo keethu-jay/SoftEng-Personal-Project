@@ -6,13 +6,13 @@ import cors from 'cors';
 
 // Route imports
 import healthcheckRouter from './routes/healthcheck';
-import employeeRouter from './routes/employee.ts';
-import assignedRouter from './routes/assigned.ts';
-import servicereqsRouter from './routes/servicereqs.ts';
-import directoryRouter from './routes/directory.ts';
-import pathfindRouter from './routes/pathfind.ts';
-import pathfindingRouter from './routes/pathfinding.ts';
-import forumRouter from './routes/forum.ts';
+import employeeRouter from './routes/employee';
+import assignedRouter from './routes/assigned';
+import servicereqsRouter from './routes/servicereqs';
+import directoryRouter from './routes/directory';
+import pathfindRouter from './routes/pathfind';
+import pathfindingRouter from './routes/pathfinding';
+import forumRouter from './routes/forum';
 
 import { API_ROUTES } from 'common/src/constants';
 

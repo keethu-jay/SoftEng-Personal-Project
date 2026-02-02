@@ -1,4 +1,4 @@
-import app from '../app.ts';
+import app from '../app';
 import http from 'http';
 import { AddressInfo } from 'net';
 import { createHttpTerminator } from 'http-terminator';
@@ -17,7 +17,7 @@ import { createHttpTerminator } from 'http-terminator';
 console.info('Connecting to database...');
 try {
     // Importing prisma-client.ts automatically establishes the database connection
-    require('./prisma-client.ts');
+    require('./prisma-client');
     console.log('Successfully connected to the database');
 } catch (error) {
     console.error(`Unable to establish database connection:\n  ${error}`);

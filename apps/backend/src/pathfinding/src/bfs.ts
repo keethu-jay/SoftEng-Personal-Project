@@ -1,7 +1,7 @@
-import { Coordinates } from 'common/src/constants.ts';
+import { Coordinates } from 'common/src/constants';
 import { readFileSync } from 'fs';
 import { PrismaClient } from 'database';
-import { euclideanDistance } from './distance.ts';
+import { euclideanDistance } from './distance';
 
 class GraphNode {
     private readonly neighbors: GraphNode[];

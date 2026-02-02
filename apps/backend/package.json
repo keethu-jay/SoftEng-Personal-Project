@@ -4,6 +4,8 @@
     "version": "1.0.1",
     "scripts": {
         "dev": "dotenv -e ${PROJECT_CWD}/.env -- nodemon",
+        "build": "tsc -p tsconfig.build.json",
+        "start": "node dist/bin/www.js",
         "lint": "yarn shared:prettier && yarn shared:eslint && yarn shared:tslint",
         "lint:fix": "yarn shared:prettier:fix && yarn shared:eslint:fix && yarn shared:tslint",
         "docker:run": "ts-node --transpile-only src/bin/www.ts"

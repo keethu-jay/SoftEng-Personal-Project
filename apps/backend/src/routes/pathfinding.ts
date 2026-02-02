@@ -1,8 +1,8 @@
 import express, { Router, Request, Response } from 'express';
 import PrismaClient from '../bin/prisma-client';
 import { Prisma } from 'database';
-import { Graph } from '../pathfinding/src/bfs.ts';
-import { Coordinates } from 'common/src/constants.ts';
+import { Graph } from '../pathfinding/src/bfs';
+import { Coordinates } from 'common/src/constants';
 
 const router: Router = express.Router();
 
