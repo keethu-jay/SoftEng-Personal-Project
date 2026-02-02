@@ -65,10 +65,10 @@ Before deploying the backend, push your Prisma schema to the Render database:
    - **Root Directory:** Leave empty
    - **Build Command:**
      ```bash
-     corepack enable && corepack prepare yarn@4.7.0 --activate && export PRISMA_SKIP_POSTINSTALL_GENERATE=true && export YARN_CACHE_FOLDER=".yarn/cache" && yarn install --immutable && yarn workspace database generate && yarn build
+     corepack enable && corepack prepare yarn@4.7.0 --activate && export PRISMA_SKIP_POSTINSTALL_GENERATE=true && export YARN_CACHE_FOLDER="$PWD/.yarn/cache" && mkdir -p .yarn/cache && yarn install --immutable && yarn workspace database generate && yarn build
      ```
    
-   **Note:** `YARN_CACHE_FOLDER=".yarn/cache"` keeps the cache inside the project so the **start** step can find packages (avoids "Required package missing from disk" for http-errors etc.). `PRISMA_SKIP_POSTINSTALL_GENERATE=true` must be set so Prisma does **not** run `generate` during `yarn install`. Also set `PRISMA_SKIP_POSTINSTALL_GENERATE=true` in Render **Environment Variables** (see below).
+   **Note:** `.pnp.cjs` is in `.gitignore` so it is **not** committed; Render runs `yarn install` and gets a fresh `.pnp.cjs` with correct paths (fixes "Required package missing from disk"). **`YARN_CACHE_FOLDER="$PWD/.yarn/cache"`** keeps the cache inside the project. Set `PRISMA_SKIP_POSTINSTALL_GENERATE=true` in Render **Environment Variables** (see below).
    - **Start Command:**
      ```bash
      BACKEND_PORT=$PORT NODE_OPTIONS="--max-old-space-size=480" yarn node apps/backend/dist/bin/www.js
