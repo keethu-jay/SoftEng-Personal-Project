@@ -49,7 +49,7 @@ export async function updateDirectory(){
                 // Parse data rows
                 for (let i = 1; i < rows.length; i++) {
                     const values = rows[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-                    const department: any = {};
+                    const department: Record<string, unknown> = {};
                     
                     headers.forEach((header, index) => {
                         const value = values[index];

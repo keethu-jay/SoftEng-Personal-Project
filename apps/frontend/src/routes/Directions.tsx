@@ -122,17 +122,18 @@ export default function Directions(props: DirectionsProps) {
                 }
                 setData(hospitalsData as Hospital[]);
                 setError(null);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error('Error fetching hospitals:', error);
                 // More detailed error logging
-                if (error.response) {
+                const err = error as { response?: { status: number; statusText: string; data?: unknown }; request?: unknown };
+                if (err.response) {
                     console.error('Response error:', {
-                        status: error.response.status,
-                        statusText: error.response.statusText,
-                        data: error.response.data
+                        status: err.response.status,
+                        statusText: err.response.statusText,
+                        data: err.response.data
                     });
-                    setError(`Server error: ${error.response.status} ${error.response.statusText}`);
-                } else if (error.request) {
+                    setError(`Server error: ${err.response.status} ${err.response.statusText}`);
+                } else if (err.request) {
                     console.error('No response received. Request:', error.request);
                     const apiBase = apiClient.defaults.baseURL || '';
                     const isProd = apiBase.startsWith('http') && !apiBase.includes('localhost');
@@ -142,8 +143,8 @@ export default function Directions(props: DirectionsProps) {
                             : 'Unable to connect to server. Is the backend running on port 3001?'
                     );
                 } else {
-                    console.error('Request setup error:', error.message);
-                    setError(`Error: ${error.message}`);
+                    console.error('Request setup error:', (error as Error).message);
+                    setError(`Error: ${(error as Error).message}`);
                 }
                 setData([]);
             } finally {

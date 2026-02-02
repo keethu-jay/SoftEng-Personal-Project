@@ -197,11 +197,12 @@ const MapEditor: React.FC = () => {
             await apiClient.post(`${API_ROUTES.PATHFINDING}/newNode`, payload);
             setNewNode({ lat: "", lng: "", tags: "" });
             await refreshNodesAndEdges();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to create node:", err);
+            const e = err as { response?: { data?: { error?: string } }; message?: string };
             alert(
                 `Failed to create node: ${
-                    err.response?.data?.error || err.message || "Unknown error"
+                    e.response?.data?.error || e.message || "Unknown error"
                 }`
             );
         }
@@ -233,11 +234,12 @@ const MapEditor: React.FC = () => {
             await apiClient.post(`${API_ROUTES.PATHFINDING}/newEdge`, payload);
             setNewEdge({ startNodeId: "", endNodeId: "", name: "", weight: "" });
             await refreshNodesAndEdges();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to create edge:", err);
+            const e = err as { response?: { data?: { error?: string } }; message?: string };
             alert(
                 `Failed to create edge: ${
-                    err.response?.data?.error || err.message || "Unknown error"
+                    e.response?.data?.error || e.message || "Unknown error"
                 }`
             );
         }

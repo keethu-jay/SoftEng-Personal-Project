@@ -148,18 +148,18 @@ export default function AllPost() {
             }
 
             // Map backend data to frontend format
-            const mappedPosts: PostPreviewProps[] = rawData.map((post: any) => ({
-                postId: post.postId.toString(),
-                title: post.title,
-                content: post.content,
-                createdAt: post.createdAt,
-                email: post.email || post.poster?.email || 'Unknown',
-                replies: (post.replies || []).map((reply: any) => ({
-                    replyId: reply.replyId.toString(),
-                    content: reply.content,
-                    createdAt: reply.createdAt,
-                    email: reply.email || reply.replier?.email || 'Unknown',
-                    postId: reply.postId
+            const mappedPosts: PostPreviewProps[] = rawData.map((post: Record<string, unknown>) => ({
+                postId: (post.postId as number).toString(),
+                title: post.title as string,
+                content: post.content as string,
+                createdAt: post.createdAt as string,
+                email: (post.email as string) || (post.poster as { email?: string })?.email || 'Unknown',
+                replies: ((post.replies as Record<string, unknown>[]) || []).map((reply: Record<string, unknown>) => ({
+                    replyId: (reply.replyId as number).toString(),
+                    content: reply.content as string,
+                    createdAt: reply.createdAt as string,
+                    email: (reply.email as string) || (reply.replier as { email?: string })?.email || 'Unknown',
+                    postId: reply.postId as number
                 }))
             }));
 

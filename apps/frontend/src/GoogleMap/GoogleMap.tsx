@@ -23,9 +23,9 @@ export interface GoogleMapProps {
     autoCompleteRef: RefObject<HTMLInputElement | null>;
     // For runtime, we don't depend on strong typing of these;
     // they are only forwarded to the underlying GoogleMap class.
-    hospital: any;
-    department: any;
-    graph: any;
+    hospital: unknown;
+    department: unknown;
+    graph: unknown;
     mode: string | undefined;
     zoomFlag: boolean;
     activeStepIndex?: number;

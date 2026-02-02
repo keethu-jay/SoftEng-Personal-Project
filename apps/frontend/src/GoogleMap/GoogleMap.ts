@@ -290,7 +290,7 @@ export default class GoogleMap {
                 
                 // Check if response has new format with directions
                 if (response.data && typeof response.data === 'object' && 'paths' in response.data && 'directions' in response.data) {
-                    const pathData = response.data as { paths: Coordinates[][]; directions: any[] };
+                    const pathData = response.data as { paths: Coordinates[][]; directions: unknown[] };
                     const rawData = pathData.paths;
                     const directions = pathData.directions || [];
 

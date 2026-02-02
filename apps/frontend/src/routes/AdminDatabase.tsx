@@ -44,7 +44,7 @@ const AdminDatabase: React.FC = () => {
             try {
                 const response = await apiClient.get(API_ROUTES.DEPARTMENT);
                 const hospitalsData = Array.isArray(response.data) ? response.data : [];
-                setHospitals(hospitalsData.map((h: any) => ({
+                setHospitals(hospitalsData.map((h: Record<string, unknown>) => ({
                     hospitalId: h.hospitalId,
                     name: h.name
                 })));

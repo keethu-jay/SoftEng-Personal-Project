@@ -49,7 +49,7 @@ const VoiceDirectory: React.FC = () => {
                 const res = await apiClient.get(`${API_ROUTES.DEPARTMENT}/all`);
                 const data = Array.isArray(res.data) ? res.data : [];
                 
-                const mappedDepartments = data.map((d: any) => ({
+                const mappedDepartments = data.map((d: Record<string, unknown>) => ({
                     departmentId: d.departmentId,
                     name: d.name,
                     floorNum: d.floorNum,

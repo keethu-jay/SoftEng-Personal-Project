@@ -41,7 +41,7 @@
                 "REACT_APP_GOOGLE_MAPS_API_KEY"
             ],
             "dependsOn": ["^dependencies"],
-            "outputs": ["build/**"]
+            "outputs": ["build/**", "dist/**"]
         },
         "docker:build": {
             "dependsOn": ["lint"],

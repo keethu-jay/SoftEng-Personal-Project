@@ -7,7 +7,7 @@ const DEMO_MODE_KEY = "demo_mode";
 
 // Shared state across all hook instances
 let sharedDemoMode: DemoMode = null;
-let listeners: Set<(mode: DemoMode) => void> = new Set();
+const listeners: Set<(mode: DemoMode) => void> = new Set();
 
 // Initialize from localStorage
 if (typeof window !== "undefined") {
