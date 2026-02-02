@@ -65,10 +65,10 @@ Before deploying the backend, push your Prisma schema to the Render database:
    - **Root Directory:** Leave empty
    - **Build Command:**
      ```bash
-     corepack enable && corepack prepare yarn@4.7.0 --activate && export PRISMA_SKIP_POSTINSTALL_GENERATE=true && yarn install --immutable && yarn workspace database generate && yarn build
+     corepack enable && corepack prepare yarn@4.7.0 --activate && export PRISMA_SKIP_POSTINSTALL_GENERATE=true && export YARN_CACHE_FOLDER=".yarn/cache" && yarn install --immutable && yarn workspace database generate && yarn build
      ```
    
-   **Note:** `PRISMA_SKIP_POSTINSTALL_GENERATE=true` must be set so Prisma does **not** run `generate` during `yarn install` (it fails under Yarn PnP and can leave "unplugged package missing"). We run `yarn workspace database generate` explicitly after install. Also set `PRISMA_SKIP_POSTINSTALL_GENERATE=true` in Render **Environment Variables** (see below) so it applies to the whole build.
+   **Note:** `YARN_CACHE_FOLDER=".yarn/cache"` keeps the cache inside the project so the **start** step can find packages (avoids "Required package missing from disk" for http-errors etc.). `PRISMA_SKIP_POSTINSTALL_GENERATE=true` must be set so Prisma does **not** run `generate` during `yarn install`. Also set `PRISMA_SKIP_POSTINSTALL_GENERATE=true` in Render **Environment Variables** (see below).
    - **Start Command:**
      ```bash
      BACKEND_PORT=$PORT NODE_OPTIONS="--max-old-space-size=480" yarn node apps/backend/dist/bin/www.js
@@ -84,10 +84,12 @@ Before deploying the backend, push your Prisma schema to the Render database:
    POSTGRES_URL=<Internal Database URL from Step 1>
    BACKEND_SOURCE=production
    PRISMA_SKIP_POSTINSTALL_GENERATE=true
+   YARN_CACHE_FOLDER=.yarn/cache
    ```
    **Important:** 
    - Use the **Internal Database URL** (not External) for `POSTGRES_URL`
-   - **PRISMA_SKIP_POSTINSTALL_GENERATE=true** is required so Prisma does not run `generate` during `yarn install` (avoids PnP/postinstall failures and "Required unplugged package missing").
+   - **YARN_CACHE_FOLDER=.yarn/cache** keeps the Yarn cache inside the project so the start step finds packages (fixes "Required package missing from disk" for http-errors etc.).
+   - **PRISMA_SKIP_POSTINSTALL_GENERATE=true** is required so Prisma does not run `generate` during `yarn install`.
    - **Note:** Google Maps API key is NOT needed here - it's only used in the frontend (Vercel)
 
 5. Click **"Create Web Service"**
@@ -223,6 +225,14 @@ This usually means Prisma ran `generate` during `yarn install` (and failed under
    ```
 
 3. **Pin Prisma to one version** – The repo now pins `prisma` and `@prisma/client` to `6.5.0` (with `resolutions` in root `package.json`). After pulling, run **`yarn install`** locally so the lockfile updates, then commit and push so Render uses a single Prisma version.
+
+### "Required package missing from disk" for http-errors or other packages at start (Render)
+PnP is resolving packages to a path like `/opt/render/.cache/...` that doesn't exist at start. Force the cache **inside the project**:
+
+1. **In the repo:** `.yarnrc.yml` should contain `cacheFolder: ".yarn/cache"` (already added).
+2. **In Render Build Command** include: `export YARN_CACHE_FOLDER=".yarn/cache"` before `yarn install`.
+3. **In Render Environment Variables** add: **Key** `YARN_CACHE_FOLDER`, **Value** `.yarn/cache`.
+4. **Redeploy** so the build runs a fresh install with the project-local cache; then start will find packages.
 
 ### "Required package missing from disk" / ts-node missing at start (Render)
 The **start** command must run the **compiled** backend (Node running JS), not `ts-node` (TypeScript at runtime). Under Yarn PnP on Render, ts-node is not available at runtime, so you get "Missing package: ts-node@virtual:...".
