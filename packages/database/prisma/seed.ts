@@ -357,7 +357,7 @@ async function main() {
             update: {
                 graphId: 0,
                 name: 'Chestnut Hill',
-                imageURL: '/src/public/floormaps/chf1.png',
+                imageURL: '/floormaps/chf1.png',
                 north: 42.32629,
                 south: 42.32569,
                 east: -71.14921,
@@ -366,7 +366,7 @@ async function main() {
             create: {
                 graphId: 0,
                 name: 'Chestnut Hill',
-                imageURL: '/src/public/floormaps/chf1.png',
+                imageURL: '/floormaps/chf1.png',
                 north: 42.32629,
                 south: 42.32569,
                 east: -71.14921,
@@ -378,7 +378,7 @@ async function main() {
             update: {
                 graphId: 1,
                 name: '20 Patriot Place',
-                imageURL: '/src/public/floormaps/pp20f1.png',
+                imageURL: '/floormaps/pp20f1.png',
                 north: 42.09310,
                 south: 42.09246,
                 east: -71.26553,
@@ -387,7 +387,7 @@ async function main() {
             create: {
                 graphId: 1,
                 name: '20 Patriot Place',
-                imageURL: '/src/public/floormaps/pp20f1.png',
+                imageURL: '/floormaps/pp20f1.png',
                 north: 42.09310,
                 south: 42.09246,
                 east: -71.26553,
@@ -399,7 +399,7 @@ async function main() {
             update: {
                 graphId: 2,
                 name: '22 Patriot Place - Floor 3',
-                imageURL: '/src/public/floormaps/pp22f3.png',
+                imageURL: '/floormaps/pp22f3.png',
                 north: 42.09308,
                 south: 42.09223,
                 east: -71.26654,
@@ -408,7 +408,7 @@ async function main() {
             create: {
                 graphId: 2,
                 name: '22 Patriot Place - Floor 3',
-                imageURL: '/src/public/floormaps/pp22f3.png',
+                imageURL: '/floormaps/pp22f3.png',
                 north: 42.09308,
                 south: 42.09223,
                 east: -71.26654,
@@ -420,7 +420,7 @@ async function main() {
             update: {
                 graphId: 3,
                 name: '22 Patriot Place - Floor 4',
-                imageURL: '/src/public/floormaps/pp22f4.png',
+                imageURL: '/floormaps/pp22f4.png',
                 north: 42.09308,
                 south: 42.09223,
                 east: -71.26654,
@@ -429,7 +429,7 @@ async function main() {
             create: {
                 graphId: 3,
                 name: '22 Patriot Place - Floor 4',
-                imageURL: '/src/public/floormaps/pp22f4.png',
+                imageURL: '/floormaps/pp22f4.png',
                 north: 42.09308,
                 south: 42.09223,
                 east: -71.26654,
@@ -3994,7 +3994,7 @@ async function main() {
     //         update: {
     //             floorId: 0,
     //             num: 1,
-    //             imageURL: '/src/public/floormaps/chf1.png',
+    //             imageURL: '/floormaps/chf1.png',
     //             north: 42.32629,
     //             south: 42.32569,
     //             east: -71.14921,
@@ -4004,7 +4004,7 @@ async function main() {
     //         create: {
     //             floorId: 0,
     //             num: 1,
-    //             imageURL: '/src/public/floormaps/chf1.png',
+    //             imageURL: '/floormaps/chf1.png',
     //             north: 42.32629,
     //             south: 42.32569,
     //             east: -71.14921,
@@ -4017,7 +4017,7 @@ async function main() {
     //         update: {
     //             floorId: 1,
     //             num: 1,
-    //             imageURL: '/src/public/floormaps/pp20f1.png',
+    //             imageURL: '/floormaps/pp20f1.png',
     //             north: 42.09310,
     //             south: 42.09246,
     //             east: -71.26553,
@@ -4027,7 +4027,7 @@ async function main() {
     //         create: {
     //             floorId: 1,
     //             num: 1,
-    //             imageURL: '/src/public/floormaps/pp20f1.png',
+    //             imageURL: '/floormaps/pp20f1.png',
     //             north: 42.09310,
     //             south: 42.09246,
     //             east: -71.26553,
@@ -4040,7 +4040,7 @@ async function main() {
     //         update: {
     //             floorId: 2,
     //             num: 3,
-    //             imageURL: '/src/public/floormaps/pp22f3.png',
+    //             imageURL: '/floormaps/pp22f3.png',
     //             north: 42.09308,
     //             south: 42.09223,
     //             east: -71.26654,
@@ -4050,7 +4050,7 @@ async function main() {
     //         create: {
     //             floorId: 2,
     //             num: 3,
-    //             imageURL: '/src/public/floormaps/pp22f3.png',
+    //             imageURL: '/floormaps/pp22f3.png',
     //             north: 42.09308,
     //             south: 42.09223,
     //             east: -71.26654,
@@ -4063,7 +4063,7 @@ async function main() {
     //         update: {
     //             floorId: 3,
     //             num: 4,
-    //             imageURL: '/src/public/floormaps/pp22f4.png',
+    //             imageURL: '/floormaps/pp22f4.png',
     //             north: 42.09308,
     //             south: 42.09223,
     //             east: -71.26654,
@@ -4073,7 +4073,7 @@ async function main() {
     //         create: {
     //             floorId: 3,
     //             num: 4,
-    //             imageURL: '/src/public/floormaps/pp22f4.png',
+    //             imageURL: '/floormaps/pp22f4.png',
     //             north: 42.09308,
     //             south: 42.09223,
     //             east: -71.26654,

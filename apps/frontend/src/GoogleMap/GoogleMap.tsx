@@ -18,6 +18,17 @@ export type IndoorStepInfo = {
     type: 'parking' | 'indoor';
 };
 
+/** Step from backend pathfinding directions (indoor step-by-step). */
+export type IndoorDirectionStep = {
+    idx: number;
+    instructions: string;
+    icon: string;
+    time: number;
+    distanceImp: string;
+    distanceMet: string;
+    path?: { lat: number; lng: number }[];
+};
+
 export interface GoogleMapProps {
     editor: boolean;
     autoCompleteRef: RefObject<HTMLInputElement | null>;
@@ -29,6 +40,10 @@ export interface GoogleMapProps {
     mode: string | undefined;
     zoomFlag: boolean;
     activeStepIndex?: number;
+    /** When in directions mode, which indoor step is selected (for highlighting on map). */
+    activeIndoorStepIndex?: number;
+    /** Indoor direction steps (so map can highlight the active segment). */
+    indoorDirections?: IndoorDirectionStep[];
     onStepsUpdate?: (steps: StepInfo[]) => void;
     onIndoorStepsUpdate?: (steps: IndoorStepInfo[]) => void;
     onIndoorDirectionsUpdate?: (directions: IndoorDirectionStep[]) => void;
@@ -86,6 +101,8 @@ const GGMap = (props: GoogleMapProps) => {
         props.mode,
         props.zoomFlag,
         props.activeStepIndex,
+        props.activeIndoorStepIndex,
+        props.indoorDirections,
         props.onStepsUpdate,
         props.onIndoorStepsUpdate,
     ]);
@@ -94,9 +111,8 @@ const GGMap = (props: GoogleMapProps) => {
         <div
             id="ggl-map"
             ref={mapRef}
-            // style={{ width: '65vw', height: '100vh' }}
-            className="flex-1 h-screen overflow-y-hidden"
-        ></div>
+            className="w-full h-full min-h-[500px]"
+        />
     );
 };
 

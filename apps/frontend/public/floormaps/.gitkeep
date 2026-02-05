@@ -1,0 +1,2 @@
+# Place floor plan images here: chf1.png, pp20f1.png, pp22f3.png, pp22f4.png
+# See packages/database/prisma/seed.ts for graph imageURL values.

@@ -347,6 +347,7 @@ class Graph {
                             time: Math.round(distance * 0.5), // Rough estimate: 0.5 min per unit distance
                             distanceImp: `${(distance * 0.000621371).toFixed(2)} mi`,
                             distanceMet: `${(distance * 0.001).toFixed(2)} km`,
+                            path: [from.coords, to.coords],
                         });
                     }
                 }
@@ -401,6 +402,7 @@ class Graph {
                             time: Math.round(distance * 0.5),
                             distanceImp: `${(distance * 0.000621371).toFixed(2)} mi`,
                             distanceMet: `${(distance * 0.001).toFixed(2)} km`,
+                            path: [from.coords, to.coords],
                         });
                     }
                 }

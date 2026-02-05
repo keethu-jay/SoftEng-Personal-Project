@@ -117,12 +117,25 @@ router.get('/pathfind/:graphId/:departmentId', async (req: Request, res: Respons
         });
     });
 
-    res.json(
-        graphObj.pathFind({
-            lat: department.lat ?? 0,
-            lng: department.lng ?? 0,
-        })
-    );
+    // Build edge map for direction labels (e.g. "Turn left")
+    const edgeMap = new Map<string, { name: string | null; weight: number | null }>();
+    graphDB.Nodes.forEach((node) => {
+        node.edgeStart.forEach((edge) => {
+            const key = `${edge.startNodeId}-${edge.endNodeId}`;
+            edgeMap.set(key, {
+                name: edge.name ?? null,
+                weight: edge.weight ?? null,
+            });
+        });
+    });
+
+    const departmentCoords = { lat: department.lat ?? 0, lng: department.lng ?? 0 };
+    const result = graphObj.pathFindWithDirections(departmentCoords, edgeMap, []);
+
+    res.json({
+        paths: result.paths,
+        directions: result.directions,
+    });
 });
 
 router.get('/nodes', async (req: Request, res: Response) => {

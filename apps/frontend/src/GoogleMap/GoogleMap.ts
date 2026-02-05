@@ -30,6 +30,7 @@ export default class GoogleMap {
     private steps: google.maps.DirectionsStep[];
     private activeStepIndex: number;
     private activeStepPolyline: google.maps.Polyline | null;
+    private activeIndoorStepPolyline: google.maps.Polyline | null;
     private onStepsUpdate?: (steps: StepInfo[]) => void;
     private onIndoorStepsUpdate?: (steps: IndoorStepInfo[]) => void;
     private onIndoorDirectionsUpdate?: (directions: IndoorDirectionStep[]) => void;
@@ -120,6 +121,7 @@ export default class GoogleMap {
         this.steps = [];
         this.activeStepIndex = -1;
         this.activeStepPolyline = null;
+        this.activeIndoorStepPolyline = null;
         this.onStepsUpdate = props.onStepsUpdate;
         this.onIndoorStepsUpdate = props.onIndoorStepsUpdate;
 
@@ -149,6 +151,10 @@ export default class GoogleMap {
                         // @ts-expect-error already checked that its not null above
                         this.directionsRenderer.setDirections(response);
                         this.ingestDirections(response);
+                        // Force map to redraw so the route is visible (helps when container size changes)
+                        window.setTimeout(() => {
+                            google.maps.event.trigger(this.map, 'resize');
+                        }, 100);
                     } else {
                         window.alert('Directions request failed due to ' + status);
                     }
@@ -207,9 +213,11 @@ export default class GoogleMap {
         this.onIndoorStepsUpdate = props.onIndoorStepsUpdate;
         this.onIndoorDirectionsUpdate = props.onIndoorDirectionsUpdate;
 
-        // Reset paths and nodes when graph/department changes
-        // We'll clear them before rendering new ones in the pathfinding section
-        // This prevents clearing paths that are still being used
+        // In non-editor mode, clear any previously drawn editor nodes so they don't overlay the floor map
+        if (!this.editor && this.nodes.length > 0) {
+            this.nodes.forEach((circle) => circle.setMap(null));
+            this.nodes = [];
+        }
 
         // If the destination hospital has changed,
         // or mode of transport changed, re-route via
@@ -233,19 +241,51 @@ export default class GoogleMap {
             }
             this.route();
         }
-        // Step highlight driven by React
+        // Step highlight driven by React (external/Google directions)
         if (
             typeof props.activeStepIndex === 'number' &&
             props.activeStepIndex !== this.activeStepIndex
         ) {
             this.setActiveStep(props.activeStepIndex);
         }
+        // Indoor step highlight: show the selected indoor step segment on the map
+        const indoorStepIndex = props.activeIndoorStepIndex;
+        const indoorDirs = props.indoorDirections;
+        if (typeof indoorStepIndex === 'number' && indoorDirs && indoorDirs.length > 0 && indoorStepIndex >= 0 && indoorStepIndex < indoorDirs.length) {
+            const step = indoorDirs[indoorStepIndex];
+            const path = step?.path;
+            if (path && path.length >= 2) {
+                if (this.activeIndoorStepPolyline) {
+                    this.activeIndoorStepPolyline.setMap(null);
+                    this.activeIndoorStepPolyline = null;
+                }
+                const pathLiteral: google.maps.LatLngLiteral[] = path.map((c) => ({ lat: c.lat, lng: c.lng }));
+                this.activeIndoorStepPolyline = new google.maps.Polyline({
+                    path: pathLiteral,
+                    strokeColor: '#ff7a00',
+                    strokeOpacity: 0.95,
+                    strokeWeight: 10,
+                    map: this.map,
+                    zIndex: 1002,
+                });
+                this.map.panTo(pathLiteral[0]);
+            }
+        } else {
+            if (this.activeIndoorStepPolyline) {
+                this.activeIndoorStepPolyline.setMap(null);
+                this.activeIndoorStepPolyline = null;
+            }
+        }
         // If the floor has changed, show the current floor
         if (props.graph) {
             const floorMap = this.floorMaps.get(props.graph.graphId);
             if (!floorMap) {
-                console.log('Getting floor map url from ' + props.graph.imageURL);
-                const newFloorMap = new google.maps.GroundOverlay(props.graph.imageURL, {
+                // Vite serves public/ at root: /src/public/floormaps/x.png -> /floormaps/x.png
+                const imageURL = typeof props.graph.imageURL === 'string' && props.graph.imageURL.startsWith('/src/public')
+                    ? props.graph.imageURL.replace(/^\/src\/public/, '')
+                    : (props.graph.imageURL ?? '');
+                console.log('Getting floor map url from', imageURL);
+                const newFloorMap = new google.maps.GroundOverlay(imageURL, {
                     north: props.graph.north,
                     south: props.graph.south,
                     east: props.graph.east,
@@ -267,6 +307,24 @@ export default class GoogleMap {
             }
             // Always set the floor map to be visible
             this.floorMap.setMap(this.map);
+            // Zoom map to floor bounds so the floor plan and path are visible
+            const n = props.graph.north;
+            const s = props.graph.south;
+            const e = props.graph.east;
+            const w = props.graph.west;
+            if (typeof n === 'number' && typeof s === 'number' && typeof e === 'number' && typeof w === 'number') {
+                const bounds = new google.maps.LatLngBounds(
+                    { lat: s, lng: w },
+                    { lat: n, lng: e }
+                );
+                this.map.fitBounds(bounds);
+                // Optional: cap max zoom so the floor doesn't look pixelated; min zoom so it's visible
+                const listener = google.maps.event.addListener(this.map, 'idle', () => {
+                    const z = this.map.getZoom();
+                    if (z != null && z > 20) this.map.setZoom(20);
+                    google.maps.event.removeListener(listener);
+                });
+            }
             console.log('Floor map set for graph:', props.graph.graphId);
         }
         if (props.department || props.graph) {
@@ -274,9 +332,13 @@ export default class GoogleMap {
             if (this.editor && !props.graph?.graphId) return;
             if (!this.editor && (!props.graph?.graphId || !props.department?.departmentId)) return;
 
-            // Clear old paths before fetching new ones
+            // Clear old paths and indoor step highlight before fetching new ones
             this.paths.forEach(path => path.setMap(null));
             this.paths = [];
+            if (this.activeIndoorStepPolyline) {
+                this.activeIndoorStepPolyline.setMap(null);
+                this.activeIndoorStepPolyline = null;
+            }
 
             const route = this.editor ?
                 API_ROUTES.PATHFINDING + '/edit/' + props.graph?.graphId :

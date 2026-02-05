@@ -253,7 +253,7 @@ export default function Directions(props: DirectionsProps) {
 
     return (
         <div className="flex flex-col lg:flex-row flex-1 min-h-screen">
-            <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-white">
+            <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-white overflow-y-auto lg:max-h-screen">
                 <div className="max-w-2xl">
                     <h1 className="text-3xl sm:text-4xl font-bold text-[#03045e] mb-2">
                         {props.editor ? 'Map Editor' : 'Get Directions'}
@@ -474,10 +474,14 @@ export default function Directions(props: DirectionsProps) {
                                 {steps.map((step, idx) => (
                                     <div
                                         key={`external-${idx}`}
-                                        className={`border rounded-lg px-3 py-2 text-sm transition-colors ${
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => goToStep(idx)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToStep(idx); } }}
+                                        className={`border rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer ${
                                             idx === activeStepIndex
                                                 ? "border-[#0077b6] bg-[#e1f2ff]"
-                                                : "border-gray-200 bg-white"
+                                                : "border-gray-200 bg-white hover:bg-gray-50"
                                         }`}
                                     >
                                         <div className="flex items-center justify-between">
@@ -606,7 +610,7 @@ export default function Directions(props: DirectionsProps) {
                 </div>
             </div>
 
-            <div className="flex-1 lg:flex-[2] min-h-[500px] lg:min-h-screen">
+            <div className="flex-1 lg:flex-[2] min-h-[500px] lg:h-screen lg:sticky lg:top-0 lg:flex-shrink-0">
                 <GGMap
                     editor={props.editor}
                     autoCompleteRef={autocompleteRef}
@@ -616,6 +620,8 @@ export default function Directions(props: DirectionsProps) {
                     mode={mode}
                     zoomFlag={zoomFlag}
                     activeStepIndex={steps.length ? activeStepIndex : undefined}
+                    activeIndoorStepIndex={indoorDirections.length > 0 ? currentIndoorStep : undefined}
+                    indoorDirections={indoorDirections}
                     onStepsUpdate={handleStepsUpdate}
                     onIndoorStepsUpdate={handleIndoorStepsUpdate}
                     onIndoorDirectionsUpdate={handleIndoorDirectionsUpdate}
