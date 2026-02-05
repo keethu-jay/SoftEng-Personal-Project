@@ -21,7 +21,7 @@ export default function Home() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <div className="relative bg-[url(../public/Hospital.jpg)] bg-no-repeat bg-cover bg-center min-h-screen flex flex-col items-center justify-center overflow-hidden">
+            <div className="relative bg-[url(/floormaps/Hospital.jpg)] bg-no-repeat bg-cover bg-center min-h-screen flex flex-col items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 bg-yellow-600/10 mix-blend-multiply pointer-events-none"></div>
                 <div className="absolute inset-0 bg-zinc-900/50 pointer-events-none"></div>
 

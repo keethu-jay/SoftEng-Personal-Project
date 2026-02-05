@@ -7,7 +7,8 @@ import TranslatorRequestPopup from "@/components/ServiceRequest/TranslatorReques
 import SanitationPopup  from "@/components/ServiceRequest/SanitationRequest/SanitationPopup.tsx";
 import EquipmentRequestPopup from "@/components/ServiceRequest/EquipmentRequest/EquipmentRequestPopup.tsx";
 import SecurityRequestPopup from "@/components/ServiceRequest/SecurityRequest/SecurityRequestPopup.tsx";
-import ServiceHubBackground from "../public/ServiceHubBackground.png";
+// Served from public/floormaps/ at runtime
+const ServiceHubBackground = "/floormaps/ServiceHubBackground.png";
 
 
 

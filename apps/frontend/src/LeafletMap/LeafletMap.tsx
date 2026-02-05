@@ -52,10 +52,10 @@ export default function LeafletMap() {
                 maxBounds={[[-IMG_HEIGHT * SCALE, -IMG_WIDTH * SCALE], [IMG_HEIGHT * SCALE, IMG_WIDTH * SCALE]]}
             >
                 <TileLayer
-                    url="../src/public/literally-just-white.png"
+                    url="/floormaps/literally-just-white.png"
                     bounds={[[-1, -1], [1, 1]]}
                 />
-                <ImageOverlay url="../src/public/ChestnutHillFloor1Transparent.png" bounds={[[IMG_HEIGHT * SCALE * -0.5, IMG_WIDTH * SCALE * -0.5], [IMG_HEIGHT * SCALE * 0.5, IMG_WIDTH * SCALE * 0.5]]} >
+                <ImageOverlay url="/floormaps/ChestnutHillFloor1Transparent.png" bounds={[[IMG_HEIGHT * SCALE * -0.5, IMG_WIDTH * SCALE * -0.5], [IMG_HEIGHT * SCALE * 0.5, IMG_WIDTH * SCALE * 0.5]]} >
 
                 </ImageOverlay>
                 <SVGOverlay bounds={[[IMG_HEIGHT * SCALE * -0.5, IMG_WIDTH * SCALE * -0.5], [IMG_HEIGHT * SCALE * 0.5, IMG_WIDTH * SCALE * 0.5]]} attributes={{stroke: 'red'}}>

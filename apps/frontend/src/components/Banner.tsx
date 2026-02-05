@@ -14,7 +14,8 @@ import {
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faCircleUser, faUserShield} from "@fortawesome/free-solid-svg-icons";
-import hospitalLogo from "@/public/hospital2.png";
+// Served from public/floormaps/ at build
+const hospitalLogo = "/floormaps/hospital2.png";
 
 import { useAuth0 } from "@auth0/auth0-react";
 import DemoModeDropdown from "@/components/DemoModeDropdown.tsx";
