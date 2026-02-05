@@ -157,26 +157,27 @@ export default function Directions(props: DirectionsProps) {
 
     const handleHospitalChange = (value: string) => {
         let newHospital: Hospital | null = null;
-        for (const hospital of data) {
-            if (hospital.name === value) {
-                setHospital(hospital);
-                newHospital = hospital;
+        for (const h of data) {
+            if (h.name === value) {
+                setHospital(h);
+                newHospital = h;
                 break;
             }
         }
-        console.log('Hospital change: ', hospital);
+        console.log('Hospital change: ', newHospital);
         if (newHospital) {
             const newAllGraphs: Graph[] = [];
             const graphIds = new Set<number>();
-            for (const graph of newHospital.Departments.map(d => d.Graph)) {
-                console.log('Trying ', graph.graphId);
-                if (!graphIds.has(graph.graphId)) {
-                    graphIds.add(graph.graphId);
-                    newAllGraphs.push(graph);
-                    console.log('Added ' + graph.graphId);
+            for (const g of newHospital.Departments.map(d => d.Graph)) {
+                console.log('Trying ', g.graphId);
+                if (!graphIds.has(g.graphId)) {
+                    graphIds.add(g.graphId);
+                    newAllGraphs.push(g);
+                    console.log('Added ' + g.graphId);
                 }
             }
             setAllGraphs(newAllGraphs);
+            setZoomFlag(true);
         }
     }
 

@@ -153,6 +153,7 @@ const MapEditor: React.FC = () => {
             }
             setAllGraphs(newAllGraphs);
             setGraph(undefined);
+            setZoomFlag(true);
         }
     };
 
